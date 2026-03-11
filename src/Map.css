@@ -1,6 +1,4 @@
-.f:hover, .f:hover ~ .region {
-    fill: red;
-}
+
 
 .ic {
     background-color: grey;
@@ -13,11 +11,25 @@
     position: relative;
 }
 
+.region {
+    fill: grey;
+    &:hover {
+        fill: green;
+}
+}
 
+.f:hover ~ path {
+    fill: red;
+}
+
+.region:hover, .region:has(+ .f:is(:hover, :focus)) {
+  fill: blue;
+}
 
 
 .point {
     position: absolute;
+    cursor: pointer;
 }
 
 .country:hover {
