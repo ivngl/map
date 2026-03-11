@@ -1,73 +1,88 @@
-.point:hover .region {
+.f:hover, .f:hover ~ .region {
     fill: red;
 }
 
-.point:hover {
-    border: 2px solid red;
+.ic {
+    background-color: grey;
+    height: 100%;
+}
+
+.g {
+    display: flex;
+    justify-content: center;
+    position: relative;
+}
+
+
+
+
+.point {
+    position: absolute;
 }
 
 .country:hover {
     fill: aqua;
 }
+
 .container {
     position: relative;
 }
-.test:hover .co {
-    fill:blueviolet;
-    transition: all 1s ease;
+
+
+
+
+.land {
+    fill: #CCCCCC;
+    fill-opacity: 1;
+    stroke: white;
+    stroke-opacity: 1;
+    stroke-width: 0.5;
 }
 
+.icon {
 
-			.land
-			{
-				fill: #CCCCCC;
-				fill-opacity: 1;
-				stroke:white;
-				stroke-opacity: 1;
-				stroke-width:0.5;
-			}
+    position: absolute;
+    top: 0;
+    left: 0;
+    transform: translate(-50%, -50%);
+    opacity: 0;
 
-            .icon {
+    &:hover {
+        opacity: 1;
+    }
 
-                position: absolute;
-                top: 0;
-                left: 0;
-                transform: translate(-50%, -50%);
-                opacity: 0;
-                &:hover {
-                    opacity: 1;
-                }
+}
 
-            }
+.icon-container {
+    position: relative;
 
-            .icon-container {
-                position: relative;
-                &:hover .popup {
-                    visibility: visible;
-                     width: 100px;
-  height: 100px;
-                }
-            }
+    &:hover .popup {
+        visibility: visible;
+        width: 100px;
+        height: 100px;
+    }
+}
 
-            .popup {
+.popup {
 
-                transition: .5s all ease;
-                visibility: hidden;
-                position: absolute;
-                background-color: aquamarine;
-                left: 30px;
-                & span {
-                     container-name: pop;
- font-size: 1em;
- text-wrap: wrap;
-                }
+    transition: .5s all ease;
+    visibility: hidden;
+    position: absolute;
+    background-color: aquamarine;
+    left: 30px;
 
- width: 0px;
-  height: 0px;
-            }
+    & span {
+        container-name: pop;
+        font-size: 1em;
+        text-wrap: wrap;
+    }
 
-            @container pop (max-width: 50px) {
-  .popup span {
-    font-size: 2em;
-  }
+    width: 0px;
+    height: 0px;
+}
+
+@container pop (max-width: 50px) {
+    .popup span {
+        font-size: 2em;
+    }
 }
