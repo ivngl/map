@@ -158,8 +158,12 @@ const MOCK_REGIONS: RegionData[] = [
       total: 1200,
       vacancies: [
         {
-          name: 'Python',
+          language: 'Python',
           count: 500
+        },
+        {
+          language: 'Js',
+          count: 234
         }
       ]
     }
@@ -334,8 +338,9 @@ function Map3() {
       <svg ref={mapRef} width="1920" height="1080">
         {MOCK_REGIONS.map((region, idx) => {
 
-          const total = region?.info.total
-          const { vacancies } = region.info
+          const total = region?.info?.total
+          const vacancies = region?.info?.vacancies
+          const text = vacancies?.map(item => `${item.language}: ${item.count} vacancies`).join('\n')
 
           const reg = (
             <g className='gg'>
@@ -346,11 +351,12 @@ function Map3() {
                 d={region.path}
 
               />
-              <foreignObject className='f' width='25' height='25'>
+              {total &&               <foreignObject className='f' width='25' height='25'>
                 <div className='point' onClick={handlePointClick}>
-                  <PopoverBlock text={vacancies}><SocialIcon style={{ width: 25, height: 25 }} >dfef</SocialIcon></PopoverBlock>
+                  <PopoverBlock text={text}><SocialIcon style={{ width: 25, height: 25 }} >dfef</SocialIcon></PopoverBlock>
                 </div>
-              </foreignObject>
+              </foreignObject>}
+
 
             </g>
           )
