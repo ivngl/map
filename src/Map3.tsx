@@ -289,11 +289,86 @@ const styles = {
   }
 };
 
+interface Vacancy {
+  name: string;
+  count: number;
+}
+
+interface RegionVacancies {
+  total: number;
+  vacancies: Vacancy[];
+}
+
 function Map3() {
   const [hoveredRegion, setHoveredRegion] = useState<RegionData | null>(null);
   const [mousePos, setMousePos] = useState({ x: 0, y: 0 });
+  const [regionVacancies, setRegionVacancies] = useState<Record<string, RegionVacancies>>({});
   const containerRef = useRef<HTMLDivElement>(null);
   const mapRef = useRef<SVGSVGElement | null>(null)
+
+  // Fetch vacancies from HH API for a specific region
+  const fetchVacancies = async (regionName: string): Promise<RegionVacancies | null> => {
+    try {
+      // HH API endpoint for vacancies
+      const response = await fetch(`https://api.hh.ru/vacancies?text=${encodeURIComponent(regionName)}&per_page=100`);
+
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`);
+      }
+
+      const data = await response.json();
+
+      // Group vacancies by programming language/technology
+      const vacMap = new Map<string, number>();
+      const items = data.items || [];
+
+      items.forEach((vacancy: any) => {
+        const name = vacancy.name?.toLowerCase() || '';
+
+        // Extract technology/language from vacancy name
+        const technologies = ['Python', 'Java', 'JavaScript', 'TypeScript', 'Go', 'C#', 'C++', 'PHP', 'Ruby', 'Swift', 'Kotlin', 'Rust'];
+
+        for (const tech of technologies) {
+          if (name.includes(tech.toLowerCase())) {
+            vacMap.set(tech, (vacMap.get(tech) || 0) + 1);
+          }
+        }
+      });
+
+      const vacancies: Vacancy[] = Array.from(vacMap.entries()).map(([name, count]) => ({
+        name,
+        count
+      }));
+
+      return {
+        total: data.found || 0,
+        vacancies
+      };
+    } catch (error) {
+      console.error(`Error fetching vacancies for ${regionName}:`, error);
+      return null;
+    }
+  };
+
+  // Fetch vacancies for all regions on mount
+  useEffect(() => {
+    const loadVacancies = async () => {
+      const vacanciesData: Record<string, RegionVacancies> = {};
+
+      for (const region of MOCK_REGIONS) {
+        if (region.name && region.name !== 'jfif') {
+          const result = await fetchVacancies(region.name);
+          if (result) {
+            vacanciesData[region.id || region.name] = result;
+          }
+        }
+      }
+
+      setRegionVacancies(vacanciesData);
+    };
+
+    loadVacancies();
+  }, []);
 
   function drawPoints() {
     const points: { x: number; y: number }[] = []
@@ -340,13 +415,15 @@ function Map3() {
       <svg ref={mapRef} width="1920" height="1080">
         {MOCK_REGIONS.map((region, idx) => {
 
-          const total = region?.info?.total
-          const vacancies = region?.info?.vacancies
-          const text = 'sdf'//vacancies?.map(item => `${item.language}: ${item.count} vacancies`).join('\n')
+          // Используем данные из API или fallback на region.info
+          const apiData = region.id ? regionVacancies[region.id] : null;
+          const total = apiData?.total ?? region?.info?.total;
+          const vacancies = apiData?.vacancies ?? region?.info?.vacancies;
+          const text = vacancies?.map(item => `${item.name}: ${item.count}`).join('\n') ?? '';
 
           // Вычисляем радиус круга на основе длины текста
-          const textLength = text?.length ?? 0
-          const radius = Math.max(25, 10 + textLength * 5)
+          const textLength = text?.length ?? 0;
+          const radius = Math.max(25, 10 + textLength * 2);
 
           const reg = (
             <g className='region-container'>
@@ -360,7 +437,7 @@ function Map3() {
               {total &&
                 <g className='pointer' transform={`translate(0, 0)`}>
                   <circle r={radius} fill='red' />
-                  <text textAnchor='middle'>{text}</text>
+                  <text textAnchor='middle' fill='white' fontSize='10'>{text}</text>
                 </g>
 
               }
