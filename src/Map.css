@@ -5,17 +5,36 @@
     height: 100%;
 }
 
+.svg-container {
+    width: 100vw;
+    height: auto;
+}
+svg {
+    width: 100%;
+    height: auto;
+}
+
 .g {
     display: flex;
     justify-content: center;
     position: relative;
 }
 
+.region-container {
+    position: relative;
+}
+
 .region {
+    position: absolute;
     fill: grey;
     &:hover {
         fill: green;
 }
+
+.f {
+    cursor: pointer;
+}
+
 }
 
 .f:hover ~ path {

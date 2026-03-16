@@ -1,7 +1,5 @@
 import React, { useEffect, useRef, useState } from 'react';
-import { SocialIcon } from 'react-social-icons';
 import './Map.css';
-import { PopoverBlock } from './PopoverBlock';
 // --- Types ---
 interface RegionData {
   id?: string;
@@ -299,23 +297,27 @@ function Map3() {
 
   function drawPoints() {
     const points: { x: number; y: number }[] = []
-    const pathElements = mapRef.current?.querySelectorAll("g");
+    const container = mapRef.current?.querySelectorAll(".region-container");
     const icons = []
 
-    if (pathElements) {
-      for (let i = 0; i < pathElements.length; i++) {
-        const path = pathElements[i].firstChild as SVGPathElement | null
+    if (container) {
+      for (let i = 0; i < container.length; i++) {
+        const path = container[i].querySelector('.region') as SVGPathElement | null
+        //console.log(path)
         if (path) {
           const bbox = path.getBBox()
           const pos = {
-            x: bbox.x + bbox.width / 2 - 12.5,
-            y: bbox.y + bbox.height / 2 - 12.5
+            x: bbox.x + bbox.width / 2,
+            y: bbox.y + bbox.height / 2
           }
 
-          const f = pathElements[i].querySelector(".f") as SVGForeignObjectElement | null
+          const f = container[i].querySelector(".pointer") as SVGForeignObjectElement | null
+          console.log(f)
           if (f) {
-            f.setAttribute('x', String(pos.x))
-            f.setAttribute('y', String(pos.y))
+            f.setAttribute('transform', `translate(${pos.x}, ${pos.y})`)
+            //f.setAttribute('y', String(pos.y))
+            //container[i].setAttribute('x', String(pos.x))
+            // container[i].setAttribute('y', String(pos.y))
           }
 
 
@@ -340,10 +342,14 @@ function Map3() {
 
           const total = region?.info?.total
           const vacancies = region?.info?.vacancies
-          const text = vacancies?.map(item => `${item.language}: ${item.count} vacancies`).join('\n')
+          const text = 'sdf'//vacancies?.map(item => `${item.language}: ${item.count} vacancies`).join('\n')
+
+          // Вычисляем радиус круга на основе длины текста
+          const textLength = text?.length ?? 0
+          const radius = Math.max(25, 10 + textLength * 5)
 
           const reg = (
-            <g className='gg'>
+            <g className='region-container'>
 
               <path
                 className='region'
@@ -351,11 +357,13 @@ function Map3() {
                 d={region.path}
 
               />
-              {total && <foreignObject className='f' width='25' height='25'>
-                <div className='point' onClick={handlePointClick}>
-                  <PopoverBlock text={text}><SocialIcon style={{ width: 25, height: 25 }} >dfef</SocialIcon></PopoverBlock>
-                </div>
-              </foreignObject>}
+              {total &&
+                <g className='pointer' transform={`translate(0, 0)`}>
+                  <circle r={radius} fill='red' />
+                  <text textAnchor='middle'>{text}</text>
+                </g>
+
+              }
 
 
             </g>
