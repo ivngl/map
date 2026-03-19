@@ -121,28 +121,23 @@ function Map3() {
 
   // Fetch vacancies from HH API for a specific region
   const fetchVacancies = async (regionName: string): Promise<number | null> => {
-    try {
       // HH API endpoint for vacancies
       const response = await fetch(`https://api.hh.ru/vacancies?text=${encodeURIComponent(regionName)}`);
 
-      if (!response.ok) {
-        throw new Error(`HH API HTTP error! status: ${response.status}`);
-      }
+      
+      if(response.ok) {
+        var data = await response.json()
+       }
+      
+       
 
-      const dataHH: HHResponse = await response.json();
+     // const dataHH: HHResponse = await response.json();
 
-      // SuperJob API
-      const sjResponse = await fetch(
-        `https://api.superjob.ru/2.0/vacancies/?keyword=${encodeURIComponent(regionName)}`,
-        {
-          method: 'GET',
-          headers: {
-            'X-Api-App-Id': import.meta.env.VITE_SUPERJOB_API_KEY,
-          },
-        }
-      );
+      //
+return data
 
-      if (!sjResponse.ok) {
+return Promise.resolve(7)    
+ if (!sjResponse.ok) {
         console.warn(`SuperJob API HTTP error! status: ${sjResponse.status}`);
         // Return only HH data if SuperJob fails
         return dataHH.found;
@@ -151,10 +146,7 @@ function Map3() {
       const dataSJ: SJResponse = await sjResponse.json();
 
       return dataHH.found + dataSJ.total;
-    } catch (error) {
-      console.error(`Error fetching vacancies for ${regionName}:`, error);
-      return null;
-    }
+    
   };
 
   // Fetch vacancies for all regions on mount
@@ -162,16 +154,21 @@ function Map3() {
     const loadVacancies = async () => {
       const vacanciesData: Record<string, RegionVacancies> = {};
 
-      for (const region of MOCK_REGIONS) {
-        if (region.name && region.name !== 'jfif') {
-          const result = await fetchVacancies(region.name);
-          if (result) {
-            region.vacancies = result
+      const promises = MOCK_REGIONS.map(async (region) => {
+        if (region.name) {
+          const hh = await fetchVacancies(region.name);
+          const sj = await fetchVacancies(region.name);
+          const total = hh.found + sj.found
             //vacanciesData[region.id || region.name] = result;
-          }
+          return {region, total}
         }
-      }
-console.log(MOCK_REGIONS)
+      }) 
+      Promise.allSettled(promises).then(results => {
+        results.forEach(result => {
+          result.value.region.vacancies = result.value.total
+        })
+      })
+      
       setRegionVacancies(vacanciesData);
     };
 
@@ -243,11 +240,12 @@ console.log(MOCK_REGIONS)
 
               />
               {region.vacancies &&
+              <a href='mail.ru'>
                 <g className='pointer' transform={`translate(0, 0)`}>
                   <circle r={radius} fill='red' />
                   <text textAnchor='middle' fill='white' fontSize='10'>{text}</text>
                 </g>
-
+                </a>
               }
 
 
