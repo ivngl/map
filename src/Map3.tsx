@@ -1,18 +1,22 @@
 import React, { useEffect, useRef, useState } from 'react';
 import './Map.css';
 // --- Types ---
+
+
+interface Pointer {
+  text: number;
+  radius: number;
+  textLength: number;
+  offsetY: number;
+}
 interface RegionData {
   id?: string;
   name?: string;
-  // The 'd' attribute of the SVG path.
-  // In a real app, these strings are very long.
   path: string;
   population?: string;
   capital?: string;
   description?: string;
-  point?: any;
-  info?: any;
-  total?: number;
+  pointer?: Pointer | undefined;
 }
 
 // --- Mock Data (Representative Regions) ---
@@ -123,19 +127,19 @@ function Map3() {
       // HH API endpoint for vacancies
       const response = await fetch(`https://api.hh.ru/vacancies?text=${encodeURIComponent(regionName)}`);
 
-      
+
       if(response.ok) {
-        var data = await response.json()
+        return await response.json()
        }
-      
-       
+
+
 
      // const dataHH: HHResponse = await response.json();
 
       //
-return data
 
-return Promise.resolve(7)    
+
+return Promise.resolve(7)
  if (!sjResponse.ok) {
         console.warn(`SuperJob API HTTP error! status: ${sjResponse.status}`);
         // Return only HH data if SuperJob fails
@@ -145,39 +149,52 @@ return Promise.resolve(7)
       const dataSJ: SJResponse = await sjResponse.json();
 
       return dataHH.found + dataSJ.total;
-    
+
   };
 
   // Fetch vacancies for all regions on mount
   useEffect(() => {
     const loadVacancies = async () => {
-      const vacanciesData: Record<string, RegionVacancies> = {};
 
       const promises = MOCK_REGIONS.map(async (region) => {
         if (region.name) {
           const hh = await fetchVacancies(region.name);
           const sj = await fetchVacancies(region.name);
           const total = hh.found + sj.found
-            //vacanciesData[region.id || region.name] = result;
+
+         // const textLength = region.total ? String(region.total).length : 1
+         // const radius = 20 + (textLength - 1) * 4
+          if (total) {
+            const textLength = String(total).length ?? 0
+            const radius = Math.max(20, textLength * textLength)
+            const offsetY = radius + 15
+
+            region.pointer = {
+              text: total,
+              textLength,
+              radius,
+              offsetY,
+            }
+          }
+
           return {...region, total}
         }
-      }) 
+      })
       Promise.allSettled(promises).then(results => {
-        const vacanciesData = results.map(result => 
+        const vacanciesData = results.map(result =>
           result.value
         )
-        console.log(vacanciesData)
         setRegionVacancies(vacanciesData);
-        drawPoints()
-    
+        drawPoints(vacanciesData)
+
       })
-      
+
       };
 
     loadVacancies();
   }, []);
 
-  function drawPoints() {
+  function drawPoints(vacanciesData) {
     const points: { x: number; y: number }[] = []
     const container = mapRef.current?.querySelectorAll(".region-container");
     const icons = []
@@ -193,10 +210,11 @@ return Promise.resolve(7)
             y: bbox.y + bbox.height / 2
           }
 
+          const region = vacanciesData[i]
           const f = container[i].querySelector(".pointer") as SVGForeignObjectElement | null
-          console.log(f)
+
           if (f) {
-            f.setAttribute('transform', `translate(${pos.x}, ${pos.y})`)
+            f.setAttribute('transform', `translate(${pos.x}, ${pos.y - region.offsetY})`)
             //f.setAttribute('y', String(pos.y))
             //container[i].setAttribute('x', String(pos.x))
             // container[i].setAttribute('y', String(pos.y))
@@ -217,7 +235,7 @@ return Promise.resolve(7)
 
   }
 
-  
+
 
   const handleMouseEnter = (region: RegionData) => {
     setHoveredRegion(region);
@@ -245,9 +263,10 @@ return Promise.resolve(7)
     >
       <svg ref={mapRef} width="1920" height="1080">
 
+
         {regionVacancies.map((region, idx) => {
 
-          const textLength = String(region.total).length ?? 0;
+          const textLength = String(region.pointer.text).length ?? 0;
           const radius = Math.max(20, textLength * textLength);
 
           return (
@@ -257,17 +276,49 @@ return Promise.resolve(7)
                 key={region.id}
                 d={region.path}
               />
-              {region.total &&
+              {region.pointer &&
               <a href='mail.ru'>
-                <g className='pointer'>
-                  <circle r={radius} fill='red' />
-                  <text textAnchor='middle' fill='white' fontSize='14'>{region.total}</text>
-                </g>
+                  <g className='pointer'>
+                    {(() => {
+                      const textLength = String(region.pointer.text).length
+                      const radius = 20 + (textLength - 1) * 4
+                      const lineEnd = radius + radius
+
+                      return (
+                        <>
+                          <line
+                            x1='0'
+                            y1='0'
+                            x2='0'
+                            y2={lineEnd}
+                            stroke='#3b82f6'
+                            strokeWidth='2'
+                            className='pointer-line'
+                          />
+                          <circle
+                            r={radius}
+                            fill='#3b82f6'
+                            stroke='#fff'
+                            strokeWidth='2'
+                            className='pointer-circle'
+                          />
+                          <text
+                            textAnchor='middle'
+                            dominantBaseline='central'
+                            className='point-text'
+                            style={{ fontSize: '14px', fontWeight: 'bold' }}
+                          >
+                            {region.pointer.text}
+                          </text>
+                        </>
+                      )
+                    })()}
+                  </g>
               </a>
               }
             </g>
           )
-        
+
         }
         )}
 

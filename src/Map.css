@@ -1,5 +1,10 @@
 
-
+.point-text {
+    fill: rgb(255, 255, 255);
+    font-family: Arial, sans-serif;
+    font-size: 28px;
+    white-space: pre;
+}
 .ic {
     background-color: grey;
     height: 100%;
