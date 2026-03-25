@@ -1,6 +1,6 @@
 import React, { useEffect, useRef, useState } from 'react';
 import './Map.css';
-// --- Types ---
+
 
 
 interface Pointer {
@@ -124,31 +124,31 @@ function Map3() {
 
   // Fetch vacancies from HH API for a specific region
   const fetchVacancies = async (regionName: string): Promise<number | null> => {
-      // HH API endpoint for vacancies
-      const response = await fetch(`https://api.hh.ru/vacancies?text=${encodeURIComponent(regionName)}`);
+    // HH API endpoint for vacancies
+    const response = await fetch(`https://api.hh.ru/vacancies?text=${encodeURIComponent(regionName)}`);
 
 
-      if(response.ok) {
-        return await response.json()
-       }
+    if (response.ok) {
+      return await response.json()
+    }
 
 
 
-     // const dataHH: HHResponse = await response.json();
+    // const dataHH: HHResponse = await response.json();
 
-      //
+    //
 
 
-return Promise.resolve(7)
- if (!sjResponse.ok) {
-        console.warn(`SuperJob API HTTP error! status: ${sjResponse.status}`);
-        // Return only HH data if SuperJob fails
-        return dataHH.found;
-      }
+    return Promise.resolve(7)
+    if (!sjResponse.ok) {
+      console.warn(`SuperJob API HTTP error! status: ${sjResponse.status}`);
+      // Return only HH data if SuperJob fails
+      return dataHH.found;
+    }
 
-      const dataSJ: SJResponse = await sjResponse.json();
+    const dataSJ: SJResponse = await sjResponse.json();
 
-      return dataHH.found + dataSJ.total;
+    return dataHH.found + dataSJ.total;
 
   };
 
@@ -162,12 +162,18 @@ return Promise.resolve(7)
           const sj = await fetchVacancies(region.name);
           const total = hh.found + sj.found
 
-         // const textLength = region.total ? String(region.total).length : 1
-         // const radius = 20 + (textLength - 1) * 4
+          // const textLength = region.total ? String(region.total).length : 1
+          // const radius = 20 + (textLength - 1) * 4
+          //const textLength = String(region.pointer.text).length ?? 0;
+          //const radius = Math.max(20, textLength * textLength);
+          //const textLength = String(region.pointer.text).length
+          //const radius = 20 + (textLength - 1) * 4
+          //const lineEnd = radius + radius
+
           if (total) {
             const textLength = String(total).length ?? 0
             const radius = Math.max(20, textLength * textLength)
-            const offsetY = radius + 15
+            const offsetY = radius * 2
 
             region.pointer = {
               text: total,
@@ -177,19 +183,28 @@ return Promise.resolve(7)
             }
           }
 
-          return {...region, total}
+          return { ...region, total }
         }
       })
       Promise.allSettled(promises).then(results => {
-        const vacanciesData = results.map(result =>
-          result.value
+        console.log(results)
+
+        const vacanciesData = results.map(result => {
+          if (result.status === 'fulfilled') {
+            return result.value
+          } else {
+            console.log(result.reason)
+            return MOCK_REGIONS
+          }
+        }
         )
+
         setRegionVacancies(vacanciesData);
         drawPoints(vacanciesData)
 
       })
 
-      };
+    };
 
     loadVacancies();
   }, []);
@@ -211,10 +226,10 @@ return Promise.resolve(7)
           }
 
           const region = vacanciesData[i]
-          const f = container[i].querySelector(".pointer") as SVGForeignObjectElement | null
+          const pointer = container[i].querySelector(".pointer") as SVGForeignObjectElement | null
 
-          if (f) {
-            f.setAttribute('transform', `translate(${pos.x}, ${pos.y - region.offsetY})`)
+          if (pointer) {
+            pointer.setAttribute('transform', `translate(${pos.x}, ${pos.y - region.pointer.offsetY})`)
             //f.setAttribute('y', String(pos.y))
             //container[i].setAttribute('x', String(pos.x))
             // container[i].setAttribute('y', String(pos.y))
@@ -226,9 +241,7 @@ return Promise.resolve(7)
 
     }
   }
-  useEffect(() => {
-    //drawPoints()
-  }, [])
+
 
 
   function handlePointClick() {
@@ -265,10 +278,7 @@ return Promise.resolve(7)
 
 
         {regionVacancies.map((region, idx) => {
-
-          const textLength = String(region.pointer.text).length ?? 0;
-          const radius = Math.max(20, textLength * textLength);
-
+console.log("kjkl", region)
           return (
             <g className='region-container'>
               <path
@@ -277,12 +287,9 @@ return Promise.resolve(7)
                 d={region.path}
               />
               {region.pointer &&
-              <a href='mail.ru'>
+                <a href={region.name}>
                   <g className='pointer'>
                     {(() => {
-                      const textLength = String(region.pointer.text).length
-                      const radius = 20 + (textLength - 1) * 4
-                      const lineEnd = radius + radius
 
                       return (
                         <>
@@ -290,16 +297,15 @@ return Promise.resolve(7)
                             x1='0'
                             y1='0'
                             x2='0'
-                            y2={lineEnd}
+                            y2={region.pointer.offsetY}
                             stroke='#3b82f6'
                             strokeWidth='2'
                             className='pointer-line'
                           />
                           <circle
-                            r={radius}
+                            r={region.pointer.radius}
                             fill='#3b82f6'
-                            stroke='#fff'
-                            strokeWidth='2'
+
                             className='pointer-circle'
                           />
                           <text
@@ -314,7 +320,7 @@ return Promise.resolve(7)
                       )
                     })()}
                   </g>
-              </a>
+                </a>
               }
             </g>
           )

@@ -25,28 +25,23 @@ svg {
     position: relative;
 }
 
-.region-container {
-    position: relative;
-}
+
 
 .region {
     position: absolute;
     fill: grey;
-    &:hover {
-        fill: green;
-}
 
-.f {
-    cursor: pointer;
-}
 
 }
 
-.f:hover ~ path {
-    fill: red;
+.pointer:hover circle,.pointer:hover line{
+    transition: all 1s;
+
+    stroke: white;
+    border: 2px solid white;
 }
 
-.region:hover, .region:has(+ .f:is(:hover, :focus)) {
+.region:hover, .region:has(+ a:is(:hover, :focus)) {
   fill: blue;
 }
 
