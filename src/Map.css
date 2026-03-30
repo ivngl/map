@@ -33,6 +33,9 @@ svg {
 
 
 }
+.pointer {
+    z-index: 99;
+}
 
 .pointer:hover circle,.pointer:hover line{
     transition: all 1s;
