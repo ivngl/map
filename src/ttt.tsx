@@ -3,6 +3,7 @@ interface Pointer {
 	radius: number;
 	textLength: number;
 	offsetY: number;
+	pos: any;
 }
 
 interface RegionData {

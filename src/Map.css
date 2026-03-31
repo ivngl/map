@@ -15,16 +15,33 @@
     height: auto;
 }
 svg {
-    width: 100%;
-    height: auto;
+
+position: absolute;
+}
+.wrap {
+    position: relative;
+    width: 1920px;
+    height: 1080px;
 }
 
+.svg {
+    position: absolute;
+    z-index: 1;
+}
+.svg:hover {
+
+    z-index: 133;
+}
 .g {
     display: flex;
     justify-content: center;
     position: relative;
 }
 
+a:hover {
+    position: absolute;
+    z-index: 4343;
+}
 
 
 .region {

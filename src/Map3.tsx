@@ -2,6 +2,7 @@ import React, { useEffect, useRef, useState } from 'react';
 import './Map.css';
 
 import { MOCK_REGIONS } from './ttt';
+import { getPathLookup } from 'svg-getpointatlength'
 
 // --- Styles ---
 const styles = {
@@ -108,70 +109,6 @@ function Map3() {
 
   };
 
-  // Fetch vacancies for all regions on mount
-  useEffect(() => {
-    const loadVacancies = async () => {
-
-      const promises = MOCK_REGIONS.map(async (region) => {
-        if (region.name) {
-          let total = 0
-          try {
-            const hh = await fetchVacancies(region.name);
-            total += hh.found
-          } catch (e) {
-            console.log(e)
-          }
-
-
-
-
-          // const textLength = region.total ? String(region.total).length : 1
-          // const radius = 20 + (textLength - 1) * 4
-          //const textLength = String(region.pointer.text).length ?? 0;
-          //const radius = Math.max(20, textLength * textLength);
-          //const textLength = String(region.pointer.text).length
-          //const radius = 20 + (textLength - 1) * 4
-          //const lineEnd = radius + radius
-
-          if (total) {
-            const textLength = String(total).length ?? 0
-            const radius = Math.max(20, textLength * textLength)
-            const offsetY = radius * 2
-
-            region.pointer = {
-              text: total,
-              textLength,
-              radius,
-              offsetY,
-            }
-          }
-
-          return { ...region }
-        }
-      })
-      Promise.allSettled(promises).then(results => {
-        console.log('rrr', results)
-
-        const vacanciesData = results.map((result, idx) => {
-          if (result.status === 'fulfilled') {
-            return result.value
-          } else {
-            console.log('TTTT', idx, result.reason)
-            return MOCK_REGIONS[idx]
-          }
-        }
-        )
-
-        console.log(vacanciesData)
-        setRegionVacancies(vacanciesData);
-       //drawPoints(vacanciesData)
-
-      })
-
-    };
-
-    loadVacancies();
-  }, []);
 
   function drawPoints(vacanciesData) {
     const points: { x: number; y: number }[] = []
@@ -206,6 +143,83 @@ function Map3() {
     }
   }
 
+  // Fetch vacancies for all regions on mount
+  useEffect(() => {
+    const loadVacancies = async () => {
+
+      const promises = MOCK_REGIONS.map(async (region) => {
+        if (region.name) {
+          let total = 0
+          try {
+            const hh = await fetchVacancies(region.name);
+            total += hh.found
+          } catch (e) {
+            //  console.log(e)
+            return { ...region }
+          }
+
+
+
+
+          // const textLength = region.total ? String(region.total).length : 1
+          // const radius = 20 + (textLength - 1) * 4
+          //const textLength = String(region.pointer.text).length ?? 0;
+          //const radius = Math.max(20, textLength * textLength);
+          //const textLength = String(region.pointer.text).length
+          //const radius = 20 + (textLength - 1) * 4
+          //const lineEnd = radius + radius
+
+          if (total) {
+            let lookup = getPathLookup(region.path)
+            console.log(lookup)
+            const { x, y, width, height } = lookup.getBBox()
+            const pos = {
+              x: x + width / 2,
+              y: y + height / 2
+            }
+
+            const textLength = String(total).length ?? 0
+            const radius = Math.max(20, textLength * textLength)
+            const offsetY = radius * 2
+
+            region.pointer = {
+              pos,
+              text: total,
+              textLength,
+              radius,
+              offsetY,
+            }
+          }
+
+          return { ...region }
+        }
+      })
+      Promise.allSettled(promises).then(results => {
+        console.log('rrr', results)
+
+        const vacanciesData = results.map((result, idx) => {
+          if (result.status === 'fulfilled') {
+            return result.value
+          } else {
+            console.log('TTTT', idx, result.reason)
+            return MOCK_REGIONS[idx]
+          }
+        }
+        )
+
+        //console.log(vacanciesData)
+        setRegionVacancies(vacanciesData);
+       // drawPoints(vacanciesData)
+
+      })
+
+    };
+
+    loadVacancies();
+  }, []);
+
+
+
 
 
   function handlePointClick() {
@@ -232,17 +246,71 @@ function Map3() {
     }
   };
 
+
+  function drawPoints2() {
+
+    //const containers = mapRef.current?.querySelectorAll(".region-container");
+
+
+    // if (container) {
+    return regionVacancies.map(region => {
+
+
+
+      if (region.pointer) {
+        return (
+<svg className='svg' transform={`translate(${region.pointer.pos.x}, ${region.pointer.pos.y - region.pointer.offsetY})`}>
+          <a href={region.name}>
+          <g className='pointer' >
+
+              <line
+                x1='0'
+                y1='0'
+                x2='0'
+                y2={region.pointer.offsetY}
+                stroke='#3b82f6'
+                strokeWidth='2'
+                className='pointer-line'
+              />
+              <circle
+                r={region.pointer.radius}
+                fill='#3b82f6'
+
+                className='pointer-circle'
+              />
+              <text
+                textAnchor='middle'
+                dominantBaseline='central'
+                className='point-text'
+                style={{ fontSize: '14px', fontWeight: 'bold' }}
+              >
+                {region.pointer.text}
+              </text>
+
+            </g>
+            </a>
+            </svg>
+        )
+      }
+    }
+
+    )
+
+
+    // return points
+  }
+
   return (
     <div
       ref={containerRef}
-      style={styles.container}
+      className='wrap'
       onMouseMove={handleMouseMove}
     >
       <svg ref={mapRef} width="1920" height="1080">
 
 
         {regionVacancies.map((region, idx) => {
-//console.log("kjkl", region)
+          //console.log("kjkl", region)
           return (
             <g className='region-container'>
               <path
@@ -250,49 +318,17 @@ function Map3() {
                 key={region.id}
                 d={region.path}
               />
-              {region.pointer &&
-                <a href={region.name}>
-                  <g className='pointer'>
-                    {(() => {
 
-                      return (
-                        <>
-                          <line
-                            x1='0'
-                            y1='0'
-                            x2='0'
-                            y2={region.pointer.offsetY}
-                            stroke='#3b82f6'
-                            strokeWidth='2'
-                            className='pointer-line'
-                          />
-                          <circle
-                            r={region.pointer.radius}
-                            fill='#3b82f6'
-
-                            className='pointer-circle'
-                          />
-                          <text
-                            textAnchor='middle'
-                            dominantBaseline='central'
-                            className='point-text'
-                            style={{ fontSize: '14px', fontWeight: 'bold' }}
-                          >
-                            {region.pointer.text}
-                          </text>
-                        </>
-                      )
-                    })()}
-                  </g>
-                </a>
-              }
             </g>
           )
 
         }
         )}
 
+
       </svg>
+ {drawPoints2()}
+
 
 
       {hoveredRegion && (
