@@ -1,10 +1,9 @@
 import React, { useEffect, useRef, useState } from 'react';
 import './Map.css';
 
-import { MOCK_REGIONS } from './ttt';
-import { getPathLookup } from 'svg-getpointatlength'
-import {FiMapPin} from 'react-icons/fi'
 import { SocialIcon } from 'react-social-icons';
+import { getPathLookup } from 'svg-getpointatlength';
+import { MOCK_REGIONS } from './ttt';
 
 // --- Styles ---
 const styles = {
@@ -175,18 +174,20 @@ function Map3() {
             let lookup = getPathLookup(region.path)
             console.log(lookup)
             const { x, y, width, height } = lookup.getBBox()
-            const pos = {
-              x: x + width / 2,
-              y: y + height / 2
-            }
+
 
             const textLength = String(total).length ?? 0
             const radius = Math.max(20, textLength * textLength)
             const offsetY = radius * 2
 
+            const pos = {
+              x: x + width / 2 - radius,
+              y: y + height / 2 - radius
+            }
+
             region.pointer = {
               width: radius * 2,
-              height: radius * 2 + offsetY,
+              height: radius * 2,
               pos,
               text: total,
               textLength,
@@ -233,10 +234,22 @@ function Map3() {
 
 
   const handleMouseEnter = (region: RegionData) => {
+    console.log(region.name)
+    const els = document.querySelectorAll(`.${region.name}`)
+    console.log(els)
+    els.forEach(el => {
+el.classList.toggle('active');
+    })
+
     setHoveredRegion(region);
   };
 
-  const handleMouseLeave = () => {
+  const handleMouseLeave = (region) => {
+     console.log(region.name)
+    const els = document.querySelectorAll(`.${region.name}`)
+        els.forEach(el => {
+el.classList.toggle('active');
+    })
     setHoveredRegion(null);
   };
 
@@ -263,22 +276,17 @@ function Map3() {
 
       if (region.pointer) {
         return (
-<svg className='pointer' width={region.pointer.width} height={region.pointer.height}  transform={`translate(${region.pointer.pos.x}, ${region.pointer.pos.y - region.pointer.offsetY})`}>
-          <g transform={`translate(${region.pointer.radius}, ${region.pointer.radius})`}>
-              <line
-                x1='0'
-                y1='0'
-                x2='0'
-                y2={region.pointer.offsetY}
-                stroke='#3b82f6'
-                strokeWidth='2'
-                className='pointer-line'
-              />
+<svg onMouseEnter={() => handleMouseEnter(region)}
+              onMouseLeave={() => handleMouseLeave(region)} className='pointer' data-region={region.name} width={region.pointer.width} height={region.pointer.height}  transform={`translate(${region.pointer.pos.x}, ${region.pointer.pos.y - region.pointer.offsetY})`}>
+          <g
+              transform={`translate(${region.pointer.radius}, ${region.pointer.radius})`}>
+
               <circle
+
                 r={region.pointer.radius}
                 fill='#3b82f6'
 
-                className='pointer-circle'
+                className={region.name}
               />
               <text
                 textAnchor='middle'
@@ -289,8 +297,8 @@ function Map3() {
                 {region.pointer.text}
               </text>
 </g>
-            
-            
+
+
             </svg>
         )
       }
@@ -308,28 +316,29 @@ function Map3() {
       className='wrap'
       onMouseMove={handleMouseMove}
     >
-      
+
       <svg ref={mapRef} width="1920" height="1080">
 
 
         {regionVacancies.map((region, idx) => {
           //console.log("kjkl", region)
           return (
+            <svg  className={`svg ${region.name}`}>
             <g className='region-container'>
               <path
-                className='region'
+                data-region={region.name}
+                className={`region ${region.name}`}
                 key={region.id}
                 d={region.path}
-              />
-              <text>{region.name}</text>
-              {region.name == 'Саха' ? (
-               <foreignObject x="600" y="330" width="50" height="50">
-                            <SocialIcon style={{ width: 50, height: 50 }} />
-                            </foreignObject>
-              ) : null
-      }
+                onMouseEnter={() => handleMouseEnter(region)}
+                onMouseLeave={() => handleMouseLeave(region)}
 
-            </g>
+              />
+
+
+
+              </g>
+              </svg>
           )
 
         }
@@ -345,21 +354,13 @@ function Map3() {
         <div
           style={{
             ...styles.tooltip,
-            left: mousePos.x + 15, // Offset slightly from cursor
-            top: mousePos.y + 15,
+            left: mousePos.x + 20,
+            top: mousePos.y - 20,
           }}
         >
           <div style={styles.tooltipTitle}>{hoveredRegion.name}</div>
-          <div style={{ marginBottom: '8px' }}>{hoveredRegion.description}</div>
 
-          <div style={styles.tooltipRow}>
-            <span>Capital:</span>
-            <span>{hoveredRegion.capital}</span>
-          </div>
-          <div style={styles.tooltipRow}>
-            <span>Population:</span>
-            <span>{hoveredRegion.population}</span>
-          </div>
+
         </div>
       )}
     </div>

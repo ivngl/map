@@ -1,10 +1,10 @@
-
 .point-text {
     fill: rgb(255, 255, 255);
     font-family: Arial, sans-serif;
     font-size: 28px;
     white-space: pre;
 }
+
 .ic {
     background-color: grey;
     height: 100%;
@@ -14,10 +14,12 @@
     width: 100vw;
     height: auto;
 }
-svg {
 
-position: absolute;
+svg {
+    position: absolute;
+    z-index: 1;
 }
+
 .wrap {
     position: relative;
     width: 1920px;
@@ -28,10 +30,12 @@ position: absolute;
     position: absolute;
     z-index: 1;
 }
+
 .svg:hover {
 
     z-index: 133;
 }
+
 .g {
     display: flex;
     justify-content: center;
@@ -50,24 +54,25 @@ a:hover {
 
 
 }
+
 .pointer {
     z-index: 1;
 }
+
 .pointer:hover {
     z-index: 100;
 }
 
-.pointer:hover circle,.pointer:hover line{
-    transition: all 1s;
 
+
+.active {
+    fill: green;
+    transition: all 1s;
+    position: absolute;
+    z-index: 99999999;
     stroke: white;
     border: 2px solid white;
 }
-
-.region:hover, .region:has(+ a:is(:hover, :focus)) {
-  fill: blue;
-}
-
 
 .point {
     position: absolute;
@@ -92,6 +97,8 @@ a:hover {
     stroke-opacity: 1;
     stroke-width: 0.5;
 }
+
+
 
 .icon {
 
