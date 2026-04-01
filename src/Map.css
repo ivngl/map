@@ -51,7 +51,10 @@ a:hover {
 
 }
 .pointer {
-    z-index: 99;
+    z-index: 1;
+}
+.pointer:hover {
+    z-index: 100;
 }
 
 .pointer:hover circle,.pointer:hover line{

@@ -3,6 +3,8 @@ import './Map.css';
 
 import { MOCK_REGIONS } from './ttt';
 import { getPathLookup } from 'svg-getpointatlength'
+import {FiMapPin} from 'react-icons/fi'
+import { SocialIcon } from 'react-social-icons';
 
 // --- Styles ---
 const styles = {
@@ -183,6 +185,8 @@ function Map3() {
             const offsetY = radius * 2
 
             region.pointer = {
+              width: radius * 2,
+              height: radius * 2 + offsetY,
               pos,
               text: total,
               textLength,
@@ -259,10 +263,8 @@ function Map3() {
 
       if (region.pointer) {
         return (
-<svg className='svg' transform={`translate(${region.pointer.pos.x}, ${region.pointer.pos.y - region.pointer.offsetY})`}>
-          <a href={region.name}>
-          <g className='pointer' >
-
+<svg className='pointer' width={region.pointer.width} height={region.pointer.height}  transform={`translate(${region.pointer.pos.x}, ${region.pointer.pos.y - region.pointer.offsetY})`}>
+          <g transform={`translate(${region.pointer.radius}, ${region.pointer.radius})`}>
               <line
                 x1='0'
                 y1='0'
@@ -286,9 +288,9 @@ function Map3() {
               >
                 {region.pointer.text}
               </text>
-
-            </g>
-            </a>
+</g>
+            
+            
             </svg>
         )
       }
@@ -306,6 +308,7 @@ function Map3() {
       className='wrap'
       onMouseMove={handleMouseMove}
     >
+      
       <svg ref={mapRef} width="1920" height="1080">
 
 
@@ -318,6 +321,13 @@ function Map3() {
                 key={region.id}
                 d={region.path}
               />
+              <text>{region.name}</text>
+              {region.name == 'Саха' ? (
+               <foreignObject x="600" y="330" width="50" height="50">
+                            <SocialIcon style={{ width: 50, height: 50 }} />
+                            </foreignObject>
+              ) : null
+      }
 
             </g>
           )

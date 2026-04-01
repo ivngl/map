@@ -4,6 +4,8 @@ interface Pointer {
 	textLength: number;
 	offsetY: number;
 	pos: any;
+	width: number;
+	height: number;
 }
 
 interface RegionData {
