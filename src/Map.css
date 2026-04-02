@@ -63,7 +63,10 @@ a:hover {
     z-index: 100;
 }
 
-
+.hide {
+    visibility: hidden;
+    display: none;
+}
 
 .active {
     fill: green;

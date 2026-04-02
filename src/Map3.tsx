@@ -177,8 +177,8 @@ function Map3() {
 
 
             const textLength = String(total).length ?? 0
-            const radius = Math.max(20, textLength * textLength)
-            const offsetY = radius * 2
+            const radius = Math.max(15, textLength * textLength)
+            const offsetY = height > radius * 5 ? 0 : radius * 2
 
             const pos = {
               x: x + width / 2 - radius,
@@ -250,7 +250,7 @@ el.classList.toggle('active');
         els.forEach(el => {
 el.classList.toggle('active');
     })
-    setHoveredRegion(null);
+   setHoveredRegion(null);
   };
 
   const handleMouseMove = (e: React.MouseEvent) => {
@@ -344,24 +344,47 @@ el.classList.toggle('active');
         }
         )}
 
+        {drawPoints2()}
+        {hoveredRegion && (
+          <svg className='active'>
+            <g className='region-container'>
+              <path
+                data-region={hoveredRegion.name}
+                className='active'
+                key={hoveredRegion.id}
+                d={hoveredRegion.path}
+              onMouseEnter={() => handleMouseEnter(hoveredRegion)}
+              onMouseLeave={() => handleMouseLeave(hoveredRegion)}
 
+              />
+
+
+
+            </g>
+          </svg>)}
       </svg>
- {drawPoints2()}
+
 
 
 
       {hoveredRegion && (
-        <div
+        <>
+
+                <div
           style={{
             ...styles.tooltip,
-            left: mousePos.x + 20,
+            left: mousePos.x + 50,
             top: mousePos.y - 20,
           }}
         >
-          <div style={styles.tooltipTitle}>{hoveredRegion.name}</div>
+            <div style={styles.tooltipTitle}>
+              <h4>{hoveredRegion.name}</h4>
+            <span> {hoveredRegion?.pointer?.text} vacancies</span>
+            </div>
 
 
-        </div>
+          </div>
+          </>
       )}
     </div>
   );
