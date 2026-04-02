@@ -277,10 +277,18 @@ el.classList.toggle('active');
       if (region.pointer) {
         return (
 <svg onMouseEnter={() => handleMouseEnter(region)}
-              onMouseLeave={() => handleMouseLeave(region)} className='pointer' data-region={region.name} width={region.pointer.width} height={region.pointer.height}  transform={`translate(${region.pointer.pos.x}, ${region.pointer.pos.y - region.pointer.offsetY})`}>
+              onMouseLeave={() => handleMouseLeave(region)} className='pointer' data-region={region.name} width={region.pointer.width} height={region.pointer.height + 20}  transform={`translate(${region.pointer.pos.x}, ${region.pointer.pos.y - region.pointer.offsetY})`}>
           <g
               transform={`translate(${region.pointer.radius}, ${region.pointer.radius})`}>
-
+  <line
+                            x1='0'
+                            y1='0'
+                            x2='0'
+                            y2={region.pointer.offsetY}
+                            stroke='#3b82f6'
+                            strokeWidth='2'
+                            className='pointer-line'
+                          />
               <circle
 
                 r={region.pointer.radius}
@@ -346,6 +354,7 @@ el.classList.toggle('active');
 
         {drawPoints2()}
         {hoveredRegion && (
+          <>
           <svg className='active'>
             <g className='region-container'>
               <path
@@ -361,7 +370,44 @@ el.classList.toggle('active');
 
 
             </g>
-          </svg>)}
+            </svg>
+            {hoveredRegion.pointer && (
+              <svg onMouseEnter={() => handleMouseEnter(hoveredRegion)}
+                onMouseLeave={() => handleMouseLeave(hoveredRegion)} className='pointer' data-hoveredRegion={hoveredRegion.name} width={hoveredRegion.pointer.width} height={hoveredRegion.pointer.height + 20} transform={`translate(${hoveredRegion.pointer.pos.x}, ${hoveredRegion.pointer.pos.y - hoveredRegion.pointer.offsetY})`}>
+                <g
+                  transform={`translate(${hoveredRegion.pointer.radius}, ${hoveredRegion.pointer.radius})`}>
+                  <line
+                    x1='0'
+                    y1='0'
+                    x2='0'
+                    y2={hoveredRegion.pointer.offsetY}
+                    stroke='#3b82f6'
+                    strokeWidth='2'
+                    className='pointer-line'
+                  />
+                  <circle
+
+                    r={hoveredRegion.pointer.radius}
+                    fill='#3b82f6'
+
+                    className={hoveredRegion.name}
+                  />
+                  <text
+                    textAnchor='middle'
+                    dominantBaseline='central'
+                    className='point-text'
+                    style={{ fontSize: '14px', fontWeight: 'bold' }}
+                  >
+                    {hoveredRegion.pointer.text}
+                  </text>
+                </g>
+
+
+              </svg>
+            )}
+
+</>
+          )}
       </svg>
 
 
