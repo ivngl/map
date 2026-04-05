@@ -150,3 +150,22 @@ a:hover {
         font-size: 2em;
     }
 }
+
+.pointer-line {
+    transition: all 10s;
+    fill: white;
+    stroke: white;
+    transform: scale(2);
+}
+
+.pointer:hover line {
+    transition: all;
+    transform: scaleY(5);
+    transform-origin: top;
+}
+
+line {
+  transform: scaleY(1);
+  transform-origin: top;
+}
+

@@ -214,7 +214,7 @@ function Map3() {
 
         //console.log(vacanciesData)
         setRegionVacancies(vacanciesData);
-       // drawPoints(vacanciesData)
+        // drawPoints(vacanciesData)
 
       })
 
@@ -238,19 +238,19 @@ function Map3() {
     const els = document.querySelectorAll(`.${region.name}`)
     console.log(els)
     els.forEach(el => {
-el.classList.toggle('active');
+      el.classList.toggle('active');
     })
 
     setHoveredRegion(region);
   };
 
   const handleMouseLeave = (region) => {
-     console.log(region.name)
+    console.log(region.name)
     const els = document.querySelectorAll(`.${region.name}`)
-        els.forEach(el => {
-el.classList.toggle('active');
+    els.forEach(el => {
+      el.classList.toggle('active');
     })
-   setHoveredRegion(null);
+    setHoveredRegion(null);
   };
 
   const handleMouseMove = (e: React.MouseEvent) => {
@@ -276,19 +276,19 @@ el.classList.toggle('active');
 
       if (region.pointer) {
         return (
-<svg onMouseEnter={() => handleMouseEnter(region)}
-              onMouseLeave={() => handleMouseLeave(region)} className='pointer' data-region={region.name} width={region.pointer.width} height={region.pointer.height + 20}  transform={`translate(${region.pointer.pos.x}, ${region.pointer.pos.y - region.pointer.offsetY})`}>
-          <g
+          <svg onMouseEnter={() => handleMouseEnter(region)}
+            onMouseLeave={() => handleMouseLeave(region)} className='pointer' data-region={region.name} width={region.pointer.width} height={region.pointer.height + 20} transform={`translate(${region.pointer.pos.x}, ${region.pointer.pos.y - region.pointer.offsetY})`}>
+            <g
               transform={`translate(${region.pointer.radius}, ${region.pointer.radius})`}>
-  <line
-                            x1='0'
-                            y1='0'
-                            x2='0'
-                            y2={region.pointer.offsetY}
-                            stroke='#3b82f6'
-                            strokeWidth='2'
-                            className='pointer-line'
-                          />
+              <line
+                x1='0'
+                y1='0'
+                x2='0'
+                y2={region.pointer.offsetY}
+                stroke='#3b82f6'
+                strokeWidth='2'
+                className='pointer-line'
+              />
               <circle
 
                 r={region.pointer.radius}
@@ -304,10 +304,10 @@ el.classList.toggle('active');
               >
                 {region.pointer.text}
               </text>
-</g>
+            </g>
 
 
-            </svg>
+          </svg>
         )
       }
     }
@@ -317,6 +317,70 @@ el.classList.toggle('active');
 
     // return points
   }
+  function createMapRegion(region, isActive: boolean = false) {
+    const styles = {
+      stroke: isActive ? 'white': '',
+    }
+    return (<svg className={`svg ${region.name}`}>
+      <g className='region-container'>
+        <path
+          data-region={region.name}
+          className={`region ${region.name} ${isActive && 'active'}`}
+          key={region.id}
+          d={region.path}
+          onMouseEnter={() => handleMouseEnter(region)}
+          onMouseLeave={() => handleMouseLeave(region)}
+        />
+      </g>
+    </svg>)
+  }
+  function createMapPointer(region, isActive: boolean = false) {
+    const styles = {
+      stroke: isActive ? 'white': '',
+    }
+
+    return (
+      <svg onMouseEnter={() => handleMouseEnter(region)}
+      onMouseLeave={() => handleMouseLeave(region)} className='pointer' data-region={region.name} width={region.pointer.width} height={region.pointer.height + 20} transform={`translate(${region.pointer.pos.x}, ${region.pointer.pos.y - region.pointer.offsetY})`}>
+      <g
+        transform={`translate(${region.pointer.radius}, ${region.pointer.radius})`}>
+        <circle
+          r={region.pointer.radius}
+          fill='#3b82f6'
+          stroke={styles.stroke}
+          className={region.name}
+        />
+        <text
+          textAnchor='middle'
+          dominantBaseline='central'
+          className='point-text'
+          style={{ fontSize: '14px', fontWeight: 'bold' }}
+        >
+          {region.pointer.text}
+        </text>
+      </g>
+    </svg>)
+  }
+
+  function renderSvgMap() {
+
+    const mapRegions = []
+    const mapPointers = []
+
+
+    regionVacancies.map((region, idx) => {
+      //console.log("kjkl", region)
+      mapRegions.push(
+        createMapRegion(region)
+      )
+      if (region.pointer) {
+        mapPointers.push(
+          createMapPointer(region)
+        )
+      }
+    })
+    return [mapRegions, mapPointers]
+  }
 
   return (
     <div
@@ -324,90 +388,17 @@ el.classList.toggle('active');
       className='wrap'
       onMouseMove={handleMouseMove}
     >
-
       <svg ref={mapRef} width="1920" height="1080">
-
-
-        {regionVacancies.map((region, idx) => {
-          //console.log("kjkl", region)
-          return (
-            <svg  className={`svg ${region.name}`}>
-            <g className='region-container'>
-              <path
-                data-region={region.name}
-                className={`region ${region.name}`}
-                key={region.id}
-                d={region.path}
-                onMouseEnter={() => handleMouseEnter(region)}
-                onMouseLeave={() => handleMouseLeave(region)}
-
-              />
-
-
-
-              </g>
-              </svg>
-          )
-
-        }
-        )}
-
-        {drawPoints2()}
+        {renderSvgMap()}
         {hoveredRegion && (
           <>
-          <svg className='active'>
-            <g className='region-container'>
-              <path
-                data-region={hoveredRegion.name}
-                className='active'
-                key={hoveredRegion.id}
-                d={hoveredRegion.path}
-              onMouseEnter={() => handleMouseEnter(hoveredRegion)}
-              onMouseLeave={() => handleMouseLeave(hoveredRegion)}
-
-              />
-
-
-
-            </g>
-            </svg>
+           {createMapRegion(hoveredRegion, true)}
             {hoveredRegion.pointer && (
-              <svg onMouseEnter={() => handleMouseEnter(hoveredRegion)}
-                onMouseLeave={() => handleMouseLeave(hoveredRegion)} className='pointer' data-hoveredRegion={hoveredRegion.name} width={hoveredRegion.pointer.width} height={hoveredRegion.pointer.height + 20} transform={`translate(${hoveredRegion.pointer.pos.x}, ${hoveredRegion.pointer.pos.y - hoveredRegion.pointer.offsetY})`}>
-                <g
-                  transform={`translate(${hoveredRegion.pointer.radius}, ${hoveredRegion.pointer.radius})`}>
-                  <line
-                    x1='0'
-                    y1='0'
-                    x2='0'
-                    y2={hoveredRegion.pointer.offsetY}
-                    stroke='#3b82f6'
-                    strokeWidth='2'
-                    className='pointer-line'
-                  />
-                  <circle
-
-                    r={hoveredRegion.pointer.radius}
-                    fill='#3b82f6'
-
-                    className={hoveredRegion.name}
-                  />
-                  <text
-                    textAnchor='middle'
-                    dominantBaseline='central'
-                    className='point-text'
-                    style={{ fontSize: '14px', fontWeight: 'bold' }}
-                  >
-                    {hoveredRegion.pointer.text}
-                  </text>
-                </g>
-
-
-              </svg>
+              createMapPointer(hoveredRegion, true)
             )}
 
-</>
-          )}
+          </>
+        )}
       </svg>
 
 
@@ -416,21 +407,21 @@ el.classList.toggle('active');
       {hoveredRegion && (
         <>
 
-                <div
-          style={{
-            ...styles.tooltip,
-            left: mousePos.x + 50,
-            top: mousePos.y - 20,
-          }}
-        >
+          <div
+            style={{
+              ...styles.tooltip,
+              left: mousePos.x + 50,
+              top: mousePos.y - 20,
+            }}
+          >
             <div style={styles.tooltipTitle}>
               <h4>{hoveredRegion.name}</h4>
-            <span> {hoveredRegion?.pointer?.text} vacancies</span>
+              <span> {hoveredRegion?.pointer?.text} vacancies</span>
             </div>
 
 
           </div>
-          </>
+        </>
       )}
     </div>
   );
