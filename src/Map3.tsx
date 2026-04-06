@@ -238,7 +238,7 @@ function Map3() {
     const els = document.querySelectorAll(`.${region.name}`)
     console.log(els)
     els.forEach(el => {
-      el.classList.toggle('active');
+     // el.classList.toggle('active');
     })
 
     setHoveredRegion(region);
@@ -248,9 +248,9 @@ function Map3() {
     console.log(region.name)
     const els = document.querySelectorAll(`.${region.name}`)
     els.forEach(el => {
-      el.classList.toggle('active');
+      //el.classList.toggle('active');
     })
-    setHoveredRegion(null);
+    //setHoveredRegion(null);
   };
 
   const handleMouseMove = (e: React.MouseEvent) => {
@@ -321,11 +321,11 @@ function Map3() {
     const styles = {
       stroke: isActive ? 'white': '',
     }
-    return (<svg className={`svg ${region.name}`}>
+    return (<svg className={`region ${region.name}`}>
       <g className='region-container'>
         <path
           data-region={region.name}
-          className={`region ${region.name} ${isActive && 'active'}`}
+          className={`region ${region.name}`}
           key={region.id}
           d={region.path}
           onMouseEnter={() => handleMouseEnter(region)}
@@ -347,7 +347,6 @@ function Map3() {
         <circle
           r={region.pointer.radius}
           fill='#3b82f6'
-          stroke={styles.stroke}
           className={region.name}
         />
         <text

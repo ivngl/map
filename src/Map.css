@@ -51,31 +51,29 @@ a:hover {
 .region {
     position: absolute;
     fill: grey;
-
+    transition: all 1s;
 
 }
 
 .pointer {
-    z-index: 1;
+    position: absolute;
 }
 
-.pointer:hover {
-    z-index: 100;
-}
+
 
 .hide {
     visibility: hidden;
     display: none;
 }
 
-.active {
+.region:hover, .pointer:hover circle,
+.region:hover + .pointer circle,
+.region:has(+ .pointer:hover) path  {
     fill: green;
     transition: all 1s;
-    position: absolute;
-    z-index: 99999999;
     stroke: white;
-    border: 2px solid white;
 }
+
 
 .point {
     position: absolute;
@@ -158,11 +156,7 @@ a:hover {
     transform: scale(2);
 }
 
-.pointer:hover line {
-    transition: all;
-    transform: scaleY(5);
-    transform-origin: top;
-}
+
 
 line {
   transform: scaleY(1);
