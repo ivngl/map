@@ -91,8 +91,7 @@ function Map3() {
 
   const [viewBox, setViewBox] = useState({x: 0, y: 0, width: 1920, height: 1080})
   const [scale, setScale] = useState(1.2)
-  const [fontSize, setFontSize] = useState(12)
-
+  
   // Fetch vacancies from HH API for a specific region
   const fetchVacancies = async (regionName: string): Promise<any> => {
     // HH API endpoint for vacancies
@@ -320,14 +319,14 @@ function Map3() {
     }
 
     return (
-      <svg onMouseEnter={() => handleMouseEnter(region)}
+      <g
+      onMouseEnter={() => handleMouseEnter(region)}
         onMouseLeave={() => handleMouseLeave(region)} className='pointer' 
         data-region={region.name} 
         width={region.pointer.width} 
         height={region.pointer.height + 20} 
-        transform={`translate(${region.pointer.pos.x}, ${region.pointer.pos.y - region.pointer.offsetY})`}>
-        <g
-          transform={`translate(${region.pointer.radius}, ${region.pointer.radius})`}>
+        transform={`translate(${region.pointer.pos.x + region.pointer.radius}, ${region.pointer.pos.y + region.pointer.radius - region.pointer.offsetY})`}>
+        
           <circle
             r={region.pointer.radius}
             fill='#3b82f6'
@@ -342,7 +341,7 @@ function Map3() {
             {region.pointer.text}
           </text>
         </g>
-      </svg>)
+      )
   }
 
   function renderSvgMap() {
@@ -371,11 +370,11 @@ function Map3() {
       width: viewBox.width / scale, 
       height: viewBox.height / scale}
    setViewBox(newViewBox)
-   setFontSize(fontSize => fontSize / scale)
+   //setFontSize(fontSize => fontSize / scale)
    const newRegionVacancies = regionVacancies.map(region => {
     console.log(region.pointer)
     if(region.pointer) {
-      region.pointer = getPointData(region.path, region.pointer.text, fontSize / scale)
+      region.pointer = getPointData(region.path, region.pointer.text, region.pointer.textSize / scale)
     } 
     return region
     }
@@ -393,11 +392,11 @@ function Map3() {
    setViewBox(newViewBox)
    //mapRef.current.setAttribute('viewBox', `${newX} ${newY} ${width} ${height}`);
 
-   setFontSize(fontSize => fontSize * scale)
+   //setFontSize(fontSize => fontSize * scale)
    const newRegionVacancies = regionVacancies.map(region => {
     console.log(region.pointer)
     if(region.pointer) {
-      region.pointer = getPointData(region.path, region.pointer.text, fontSize * scale)
+      region.pointer = getPointData(region.path, region.pointer.text, region.pointer.textSize * scale)
     } 
     return region
     }
