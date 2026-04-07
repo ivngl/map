@@ -364,22 +364,31 @@ function Map3() {
 
     
 
+  let scalf = .2
+  let pointS = 1
   
   function handleZoom() {
     const newViewBox = {x: 0, y: 0, 
       width: viewBox.width / scale, 
       height: viewBox.height / scale}
    setViewBox(newViewBox)
+   let totS = pointS - scalf
+   let pointers = document.querySelectorAll('.pointer')
+   pointers.forEach(point => {
+  point.children.forEach(el =>{
+      el.setAttribute('transform', `scale(${totS})`)
+   })
+  })
    //setFontSize(fontSize => fontSize / scale)
    const newRegionVacancies = regionVacancies.map(region => {
     console.log(region.pointer)
     if(region.pointer) {
-      region.pointer = getPointData(region.path, region.pointer.text, region.pointer.textSize / scale)
+      //region.pointer = getPointData(region.path, region.pointer.text, region.pointer.textSize / scale)
     } 
     return region
     }
    )
-   setRegionVacancies(newRegionVacancies);
+   //setRegionVacancies(newRegionVacancies);
         
    //mapRef.current.setAttribute('viewBox', `${newViewBox.x} ${newViewBox.y} ${newViewBox.width} ${newViewBox.height}`);
 
@@ -391,17 +400,21 @@ function Map3() {
       height: viewBox.height * scale}
    setViewBox(newViewBox)
    //mapRef.current.setAttribute('viewBox', `${newX} ${newY} ${width} ${height}`);
-
+ pointers.forEach(point => {
+  point.children.forEach(el =>{
+      el.setAttribute('transform', 'scale(.8)')
+   })
+  })
    //setFontSize(fontSize => fontSize * scale)
    const newRegionVacancies = regionVacancies.map(region => {
     console.log(region.pointer)
     if(region.pointer) {
-      region.pointer = getPointData(region.path, region.pointer.text, region.pointer.textSize * scale)
+      //region.pointer = getPointData(region.path, region.pointer.text, region.pointer.textSize * scale)
     } 
     return region
     }
    )
-   setRegionVacancies(newRegionVacancies);
+   //setRegionVacancies(newRegionVacancies);
   }
 
 
