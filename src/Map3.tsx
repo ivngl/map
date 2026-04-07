@@ -82,6 +82,8 @@ interface SJResponse {
   objects: any[];
 }
 
+  let scalf = .2
+  let pointS = 1
 function Map3() {
   const [hoveredRegion, setHoveredRegion] = useState<RegionData | null>(null);
   const [mousePos, setMousePos] = useState({ x: 0, y: 0 });
@@ -89,9 +91,11 @@ function Map3() {
   const containerRef = useRef<HTMLDivElement>(null);
   const mapRef = useRef<SVGSVGElement | null>(null);
 
-  const [viewBox, setViewBox] = useState({x: 0, y: 0, width: 1920, height: 1080})
-  const [scale, setScale] = useState(1.2)
-  
+  const initialViewBox = {x: 0, y: 50, width: 1220, height: 750}
+  const [viewBox, setViewBox] = useState(initialViewBox)
+  const [scale, setScale] = useState(1)
+   const [map, setMap] = useState({width: 1280, height: 720})
+
   // Fetch vacancies from HH API for a specific region
   const fetchVacancies = async (regionName: string): Promise<any> => {
     // HH API endpoint for vacancies
@@ -178,9 +182,9 @@ function Map3() {
               radius,
               offsetY,
             }
-        
+
     }
-  
+
   useEffect(() => {
     const loadVacancies = async () => {
 
@@ -236,8 +240,8 @@ function Map3() {
   };
 
   const handleMouseMove = (e: React.MouseEvent) => {
-    if (containerRef.current) {
-      const rect = containerRef.current.getBoundingClientRect();
+    if (mapRef.current) {
+      const rect = mapRef.current.getBoundingClientRect();
       setMousePos({
         x: e.clientX - rect.left,
         y: e.clientY - rect.top,
@@ -300,7 +304,7 @@ function Map3() {
     // return points
   }
   function createMapRegion(region, isActive: boolean = false) {
-    
+
     return ( <g className='region'>
         <path
           data-region={region.name}
@@ -314,25 +318,24 @@ function Map3() {
     )
   }
   function createMapPointer(region, isActive: boolean = false) {
-    const styles = {
-      stroke: isActive ? 'white' : '',
-    }
 
     return (
       <g
       onMouseEnter={() => handleMouseEnter(region)}
-        onMouseLeave={() => handleMouseLeave(region)} className='pointer' 
-        data-region={region.name} 
-        width={region.pointer.width} 
-        height={region.pointer.height + 20} 
+        onMouseLeave={() => handleMouseLeave(region)} className='pointer'
+        data-region={region.name}
+        width={region.pointer.width}
+        height={region.pointer.height + 20}
         transform={`translate(${region.pointer.pos.x + region.pointer.radius}, ${region.pointer.pos.y + region.pointer.radius - region.pointer.offsetY})`}>
-        
-          <circle
+
+        <circle
+          transform={`scale(${scale})`}
             r={region.pointer.radius}
             fill='#3b82f6'
             className={region.name}
           />
-          <text
+        <text
+          transform={`scale(${scale})`}
             textAnchor='middle'
             dominantBaseline='central'
             className='pointer-text'
@@ -362,70 +365,52 @@ function Map3() {
     return [mapRegions, mapPointers]
   }
 
-    
 
-  let scalf = .2
-  let pointS = 1
-  
+
+  const scaleFactor = .2
+
   function handleZoom() {
-    const newViewBox = {x: 0, y: 0, 
-      width: viewBox.width / scale, 
-      height: viewBox.height / scale}
-   setViewBox(newViewBox)
-   let totS = pointS - scalf
-   let pointers = document.querySelectorAll('.pointer')
-   pointers.forEach(point => {
-  point.children.forEach(el =>{
-      el.setAttribute('transform', `scale(${totS})`)
-   })
-  })
-   //setFontSize(fontSize => fontSize / scale)
-   const newRegionVacancies = regionVacancies.map(region => {
-    console.log(region.pointer)
-    if(region.pointer) {
-      //region.pointer = getPointData(region.path, region.pointer.text, region.pointer.textSize / scale)
-    } 
-    return region
-    }
-   )
-   //setRegionVacancies(newRegionVacancies);
-        
-   //mapRef.current.setAttribute('viewBox', `${newViewBox.x} ${newViewBox.y} ${newViewBox.width} ${newViewBox.height}`);
+    //mapRef.current.style.width = '150vw'
+    //mapRef.current.style.height = '150vh'
 
-  }
+    //setMap({ width: map.width + 100, height: map.height + 100 })
+    setScale(scale => scale - scaleFactor)
+    //mapRef.current.setAttribute('viewBox', `${newX} ${newY} ${width} ${height}`);
+    let pointers = document.querySelectorAll('.pointer')
+    pointers.forEach(point => {
+      //point.setAttribute('transform', 'translate(15)')
+      point.childNodes.forEach(el => {
+        el.setAttribute('transform', `scale(${scale})`)
+
+      })
+    })
+}
 
   function handleZoomOut() {
-    const newViewBox = {x: 0, y: 0, 
-      width: viewBox.width * scale, 
-      height: viewBox.height * scale}
-   setViewBox(newViewBox)
-   //mapRef.current.setAttribute('viewBox', `${newX} ${newY} ${width} ${height}`);
+ // setMap({width: map.width + 100, height: map.height + 100})
+      setScale(scale => scale + scaleFactor)
+    //mapRef.current.setAttribute('viewBox', `${newX} ${newY} ${width} ${height}`);
+       let pointers = document.querySelectorAll('.pointer')
  pointers.forEach(point => {
-  point.children.forEach(el =>{
-      el.setAttribute('transform', 'scale(.8)')
+  point.childNodes.forEach(el =>{
+      el.setAttribute('transform', `scale(${scale})`)
    })
   })
    //setFontSize(fontSize => fontSize * scale)
-   const newRegionVacancies = regionVacancies.map(region => {
-    console.log(region.pointer)
-    if(region.pointer) {
-      //region.pointer = getPointData(region.path, region.pointer.text, region.pointer.textSize * scale)
-    } 
-    return region
-    }
-   )
-   //setRegionVacancies(newRegionVacancies);
+
   }
 
 
   return (
     <div
-      ref={containerRef}
+
       className='wrap'
-      onMouseMove={handleMouseMove}
+
     >
-      <svg ref={mapRef} width="1920" height="1080" 
-      viewBox={`${viewBox.x} ${viewBox.y} ${viewBox.width} ${viewBox.height}`}>
+      <svg ref={mapRef} width={map.width / scale} height={map.height / scale}
+        viewBox={`${viewBox.x} ${viewBox.y} ${viewBox.width} ${viewBox.height}`}
+        onMouseMove={handleMouseMove}
+            >
         {renderSvgMap()}
         {hoveredRegion && (
           <>
@@ -445,8 +430,8 @@ function Map3() {
 -
  </button>
       </div>
- 
-     
+
+
       {hoveredRegion && (
         <div
           style={{

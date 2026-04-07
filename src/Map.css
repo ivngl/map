@@ -13,6 +13,8 @@
 .svg-container {
     width: 100vw;
     height: auto;
+
+    
 }
 
 
@@ -20,13 +22,16 @@
 svg {
     position: absolute;
     z-index: 1;
+    fill: aqua;
+
 }
 
 .wrap {
     position: relative;
-    width: 1920px;
-    height: 1080px;
+    width: 1280px;
+    height: 720px;
     overflow: auto;
+    margin: 0 auto;
 }
 
 .svg {
