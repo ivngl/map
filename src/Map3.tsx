@@ -4,6 +4,7 @@ import './Map.css';
 import { SocialIcon } from 'react-social-icons';
 import { getPathLookup } from 'svg-getpointatlength';
 import { MOCK_REGIONS } from './ttt';
+import { TiSortAlphabetically } from 'react-icons/ti';
 
 // --- Styles ---
 const styles = {
@@ -88,6 +89,10 @@ function Map3() {
   const containerRef = useRef<HTMLDivElement>(null);
   const mapRef = useRef<SVGSVGElement | null>(null);
 
+  const [viewBox, setViewBox] = useState({x: 0, y: 0, width: 1920, height: 1080})
+  const [scale, setScale] = useState(1.2)
+  const [fontSize, setFontSize] = useState(12)
+
   // Fetch vacancies from HH API for a specific region
   const fetchVacancies = async (regionName: string): Promise<any> => {
     // HH API endpoint for vacancies
@@ -98,15 +103,6 @@ function Map3() {
       return await response.json()
     }
     throw Error('jkl')
-
-
-
-    // const dataHH: HHResponse = await response.json();
-
-    //
-
-
-
 
   };
 
@@ -144,7 +140,48 @@ function Map3() {
     }
   }
 
+  function getTextWidth(text: string, size: number = 10, family: string = 'arial') {
+    // if given, use cached canvas for better performance
+    // else, create new canvas
+    const font = `${size}px ${family}`
+    var canvas = getTextWidth.canvas || (getTextWidth.canvas = document.createElement("canvas"));
+    var context = canvas.getContext("2d");
+    context.font = font;
+    var metrics = context.measureText(text);
+    return metrics.width;
+};
   // Fetch vacancies for all regions on mount
+  function getPointData(path, total, font = 12) {
+    let lookup = getPathLookup(path)
+            const { x, y, width, height } = lookup.getBBox()
+
+
+            //const textLength = String(total).length ?? 0
+
+            const textLength = getTextWidth(total, font)
+            const pointPadding = font * .5
+            const pointMarging = 5
+            const radius = textLength * .5 + pointPadding
+            const offsetY = height > radius * 5 ? 0 : height * .5 + radius + pointMarging
+
+            const pos = {
+              x: x + width / 2 - radius,
+              y: y + height / 2 - radius
+            }
+
+            return {
+              width: radius * 2,
+              height: radius * 2,
+              pos,
+              text: total,
+              textSize: font,
+              textLength,
+              radius,
+              offsetY,
+            }
+        
+    }
+  
   useEffect(() => {
     const loadVacancies = async () => {
 
@@ -159,43 +196,10 @@ function Map3() {
             return { ...region }
           }
 
-
-
-
-          // const textLength = region.total ? String(region.total).length : 1
-          // const radius = 20 + (textLength - 1) * 4
-          //const textLength = String(region.pointer.text).length ?? 0;
-          //const radius = Math.max(20, textLength * textLength);
-          //const textLength = String(region.pointer.text).length
-          //const radius = 20 + (textLength - 1) * 4
-          //const lineEnd = radius + radius
-
           if (total) {
-            let lookup = getPathLookup(region.path)
-            console.log(lookup)
-            const { x, y, width, height } = lookup.getBBox()
-
-
-            const textLength = String(total).length ?? 0
-            const radius = Math.max(15, textLength * textLength)
-            const offsetY = height > radius * 5 ? 0 : radius * 2
-
-            const pos = {
-              x: x + width / 2 - radius,
-              y: y + height / 2 - radius
-            }
-
-            region.pointer = {
-              width: radius * 2,
-              height: radius * 2,
-              pos,
-              text: total,
-              textLength,
-              radius,
-              offsetY,
-            }
+            region.pointer = getPointData(region.path, total)
+            //region.pointer.text = total
           }
-
           return { ...region }
         }
       })
@@ -222,15 +226,6 @@ function Map3() {
 
     loadVacancies();
   }, []);
-
-
-
-
-
-  function handlePointClick() {
-
-  }
-
 
 
   const handleMouseEnter = (region: RegionData) => {
@@ -306,11 +301,8 @@ function Map3() {
     // return points
   }
   function createMapRegion(region, isActive: boolean = false) {
-    const styles = {
-      stroke: isActive ? 'white' : '',
-    }
-    return (<svg className={`region ${region.name}`}>
-      <g className='region-container'>
+    
+    return ( <g className='region'>
         <path
           data-region={region.name}
           className={`region ${region.name}`}
@@ -320,7 +312,7 @@ function Map3() {
           onMouseLeave={() => handleMouseLeave(region)}
         />
       </g>
-    </svg>)
+    )
   }
   function createMapPointer(region, isActive: boolean = false) {
     const styles = {
@@ -329,7 +321,11 @@ function Map3() {
 
     return (
       <svg onMouseEnter={() => handleMouseEnter(region)}
-        onMouseLeave={() => handleMouseLeave(region)} className='pointer' data-region={region.name} width={region.pointer.width} height={region.pointer.height + 20} transform={`translate(${region.pointer.pos.x}, ${region.pointer.pos.y - region.pointer.offsetY})`}>
+        onMouseLeave={() => handleMouseLeave(region)} className='pointer' 
+        data-region={region.name} 
+        width={region.pointer.width} 
+        height={region.pointer.height + 20} 
+        transform={`translate(${region.pointer.pos.x}, ${region.pointer.pos.y - region.pointer.offsetY})`}>
         <g
           transform={`translate(${region.pointer.radius}, ${region.pointer.radius})`}>
           <circle
@@ -340,9 +336,9 @@ function Map3() {
           <text
             textAnchor='middle'
             dominantBaseline='central'
-            className='point-text'
-            style={{ fontSize: '14px', fontWeight: 'bold' }}
-          >
+            className='pointer-text'
+            style={{fontSize: region.pointer.textSize}}
+            >
             {region.pointer.text}
           </text>
         </g>
@@ -367,13 +363,57 @@ function Map3() {
     return [mapRegions, mapPointers]
   }
 
+    
+
+  
+  function handleZoom() {
+    const newViewBox = {x: 0, y: 0, 
+      width: viewBox.width / scale, 
+      height: viewBox.height / scale}
+   setViewBox(newViewBox)
+   setFontSize(fontSize => fontSize / scale)
+   const newRegionVacancies = regionVacancies.map(region => {
+    console.log(region.pointer)
+    if(region.pointer) {
+      region.pointer = getPointData(region.path, region.pointer.text, fontSize / scale)
+    } 
+    return region
+    }
+   )
+   setRegionVacancies(newRegionVacancies);
+        
+   //mapRef.current.setAttribute('viewBox', `${newViewBox.x} ${newViewBox.y} ${newViewBox.width} ${newViewBox.height}`);
+
+  }
+
+  function handleZoomOut() {
+    const newViewBox = {x: 0, y: 0, 
+      width: viewBox.width * scale, 
+      height: viewBox.height * scale}
+   setViewBox(newViewBox)
+   //mapRef.current.setAttribute('viewBox', `${newX} ${newY} ${width} ${height}`);
+
+   setFontSize(fontSize => fontSize * scale)
+   const newRegionVacancies = regionVacancies.map(region => {
+    console.log(region.pointer)
+    if(region.pointer) {
+      region.pointer = getPointData(region.path, region.pointer.text, fontSize * scale)
+    } 
+    return region
+    }
+   )
+   setRegionVacancies(newRegionVacancies);
+  }
+
+
   return (
     <div
       ref={containerRef}
       className='wrap'
       onMouseMove={handleMouseMove}
     >
-      <svg ref={mapRef} width="1920" height="1080">
+      <svg ref={mapRef} width="1920" height="1080" 
+      viewBox={`${viewBox.x} ${viewBox.y} ${viewBox.width} ${viewBox.height}`}>
         {renderSvgMap()}
         {hoveredRegion && (
           <>
@@ -384,7 +424,17 @@ function Map3() {
           </>
         )}
       </svg>
-
+      <div style={{position: 'fixed',zIndex: 999999,
+   top: '50px', left: '50px'}}>
+<button  onClick={handleZoom}>
++
+ </button>
+ <button  onClick={handleZoomOut}>
+-
+ </button>
+      </div>
+ 
+     
       {hoveredRegion && (
         <div
           style={{

@@ -1,7 +1,7 @@
-.point-text {
+.pointer-text {
     fill: rgb(255, 255, 255);
     font-family: Arial, sans-serif;
-    font-size: 28px;
+    font-weight: bold;
     white-space: pre;
 }
 
@@ -24,6 +24,7 @@ svg {
     position: relative;
     width: 1920px;
     height: 1080px;
+    overflow: auto;
 }
 
 .svg {
