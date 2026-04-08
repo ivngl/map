@@ -87,7 +87,7 @@ interface SJResponse {
 function Map3() {
   const [hoveredRegion, setHoveredRegion] = useState<RegionData | null>(null);
   const [mousePos, setMousePos] = useState({ x: 0, y: 0 });
-  const [regionVacancies, setRegionVacancies] = useState([]);
+  const [regionVacancies, setRegionVacancies] = useState(MOCK_REGIONS);
   const containerRef = useRef<HTMLDivElement>(null);
   const mapRef = useRef<SVGSVGElement | null>(null);
 
@@ -378,9 +378,14 @@ function Map3() {
     //mapRef.current.setAttribute('viewBox', `${newX} ${newY} ${width} ${height}`);
     let pointers = document.querySelectorAll('.pointer')
     pointers.forEach(point => {
-      //point.setAttribute('transform', 'translate(15)')
+      console.log("p", point)
+      //let y = point.getAttribute('transform')
+      //let pos = y + y * scale 
+    //  console.log("ff", y, pos)
+     
+     // point.setAttribute('transform', `translate(0, ${pos})`)
       point.childNodes.forEach(el => {
-        el.setAttribute('transform', `scale(${scale})`)
+      el.setAttribute('transform', `scale(${scale})`)
 
       })
     })
