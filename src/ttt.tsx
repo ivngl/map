@@ -9,6 +9,7 @@ interface Pointer {
 }
 
 interface RegionData {
+  total: number;
 	id?: string;
 	name?: string;
 	path: string;

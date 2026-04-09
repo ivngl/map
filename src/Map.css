@@ -14,7 +14,7 @@
     width: 100vw;
     height: auto;
 
-    
+
 }
 
 
@@ -74,8 +74,11 @@ a:hover {
     display: none;
 }
 
-.region:hover, .pointer:hover circle,
+.region:hover,
+.pointer:hover circle,
+.pointer:hover line,
 .region:hover + .pointer circle,
+.region:hover + .pointer line,
 .region:has(+ .pointer:hover) path  {
     fill: green;
     transition: all 1s;
@@ -160,10 +163,9 @@ a:hover {
 }
 
 .pointer-line {
-    transition: all 10s;
-    fill: white;
-    stroke: white;
-    transform: scale(2);
+
+    stroke:#3b82f6;
+    stroke-width:1;
 }
 
 

@@ -1,4 +1,4 @@
-import React, { useEffect, useRef, useState } from 'react';
+import React, { useEffect, useMemo, useRef, useState } from 'react';
 import './Map.css';
 
 import { SocialIcon } from 'react-social-icons';
@@ -154,7 +154,12 @@ function Map3() {
     return metrics.width;
 };
   // Fetch vacancies for all regions on mount
-  function getPointData(path, total, font = 12) {
+  function getPointData(region, font = 12) {
+    const { path, total } = region
+    if(!total) return
+    const scaledFont = Math.floor(font * scale)
+
+
     let lookup = getPathLookup(path)
             const { x, y, width, height } = lookup.getBBox()
 
@@ -163,13 +168,14 @@ function Map3() {
 
             const textLength = getTextWidth(total, font)
             const pointPadding = font * .5
-            const pointMarging = 5
-            const radius = textLength * .5 + pointPadding
-            const offsetY = height > radius * 5 ? 0 : height * .5 + radius + pointMarging
 
+    const radius = textLength * .5 + pointPadding
+         const pointMarging = 0//radius * 2
+            const offsetY = height < radius ? height * .5 + radius * scale : 0//radius * 2 > height ? pointMarging : 0
+    console.log(scaledFont, textLength)
             const pos = {
-              x: x + width / 2 - radius,
-              y: y + height / 2 - radius
+              x: x + width / 2,
+              y: y + (height * .5 - offsetY)
             }
 
             return {
@@ -188,7 +194,7 @@ function Map3() {
   useEffect(() => {
     const loadVacancies = async () => {
 
-      const promises = MOCK_REGIONS.map(async (region) => {
+      const promises = regionVacancies.map(async (region) => {
         if (region.name) {
           let total = 0
           try {
@@ -200,7 +206,8 @@ function Map3() {
           }
 
           if (total) {
-            region.pointer = getPointData(region.path, total)
+            region.total = total
+            region.pointer = getPointData(region)
             //region.pointer.text = total
           }
           return { ...region }
@@ -214,7 +221,7 @@ function Map3() {
             return result.value
           } else {
             console.log('TTTT', idx, result.reason)
-            return MOCK_REGIONS[idx]
+            return regionVacancies[idx]
           }
         }
         )
@@ -326,8 +333,14 @@ function Map3() {
         data-region={region.name}
         width={region.pointer.width}
         height={region.pointer.height + 20}
-        transform={`translate(${region.pointer.pos.x + region.pointer.radius}, ${region.pointer.pos.y + region.pointer.radius - region.pointer.offsetY})`}>
+        transform={`translate(${region.pointer.pos.x}, ${region.pointer.pos.y})`}>
+           <line
 
+                y2={region.pointer.offsetY}
+                stroke='#3b82f6'
+                strokeWidth='2'
+                className='pointer-line'
+              />
         <circle
           transform={`scale(${scale})`}
             r={region.pointer.radius}
@@ -369,6 +382,13 @@ function Map3() {
 
   const scaleFactor = .2
 
+  const regions = useMemo(() => {
+    regionVacancies.forEach(region => {
+      region.pointer = getPointData(region)
+    })
+    //setRegionVacancies(newRegions)
+  }, [scale])
+
   function handleZoom() {
     //mapRef.current.style.width = '150vw'
     //mapRef.current.style.height = '150vh'
@@ -376,31 +396,14 @@ function Map3() {
     //setMap({ width: map.width + 100, height: map.height + 100 })
     setScale(scale => scale - scaleFactor)
     //mapRef.current.setAttribute('viewBox', `${newX} ${newY} ${width} ${height}`);
-    let pointers = document.querySelectorAll('.pointer')
-    pointers.forEach(point => {
-      console.log("p", point)
-      //let y = point.getAttribute('transform')
-      //let pos = y + y * scale 
-    //  console.log("ff", y, pos)
-     
-     // point.setAttribute('transform', `translate(0, ${pos})`)
-      point.childNodes.forEach(el => {
-      el.setAttribute('transform', `scale(${scale})`)
 
-      })
-    })
 }
 
   function handleZoomOut() {
  // setMap({width: map.width + 100, height: map.height + 100})
       setScale(scale => scale + scaleFactor)
     //mapRef.current.setAttribute('viewBox', `${newX} ${newY} ${width} ${height}`);
-       let pointers = document.querySelectorAll('.pointer')
- pointers.forEach(point => {
-  point.childNodes.forEach(el =>{
-      el.setAttribute('transform', `scale(${scale})`)
-   })
-  })
+
    //setFontSize(fontSize => fontSize * scale)
 
   }
