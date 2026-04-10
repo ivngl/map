@@ -162,6 +162,9 @@ function Map3() {
 
     let lookup = getPathLookup(path)
             const { x, y, width, height } = lookup.getBBox()
+      const scaledWidth  = width * scale
+      const scaledHeight  = height * scale
+      
 
 
             //const textLength = String(total).length ?? 0
@@ -171,8 +174,8 @@ function Map3() {
 
     const radius = textLength * .5 + pointPadding
          const pointMarging = 0//radius * 2
-            const offsetY = height < radius ? height * .5 + radius * scale : 0//radius * 2 > height ? pointMarging : 0
-    console.log(scaledFont, textLength)
+          const pointerInRegion = height > 20 && width  > 20
+            const offsetY = pointerInRegion ? 0 : height * .5 + radius * scale //radius * 2 > height ? pointMarging : 0
             const pos = {
               x: x + width / 2,
               y: y + (height * .5 - offsetY)
@@ -207,7 +210,7 @@ function Map3() {
 
           if (total) {
             region.total = total
-            region.pointer = getPointData(region)
+            //region.pointer = getPointData(region)
             //region.pointer.text = total
           }
           return { ...region }
@@ -227,7 +230,9 @@ function Map3() {
         )
 
         //console.log(vacanciesData)
+        
         setRegionVacancies(vacanciesData);
+      setScale(1.2)
         // drawPoints(vacanciesData)
 
       })
@@ -360,12 +365,12 @@ function Map3() {
       )
   }
 
-  function renderSvgMap() {
+  function renderSvgMap(regions) {
 
     const mapRegions = []
     const mapPointers = []
 
-    regionVacancies.map((region, idx) => {
+    regions.map((region, idx) => {
       mapRegions.push(
         createMapRegion(region)
       )
@@ -383,8 +388,11 @@ function Map3() {
   const scaleFactor = .2
 
   const regions = useMemo(() => {
-    regionVacancies.forEach(region => {
+    console.log("jjj", regionVacancies)
+   return regionVacancies.map(region => {
       region.pointer = getPointData(region)
+      return region
+      
     })
     //setRegionVacancies(newRegions)
   }, [scale])
@@ -419,15 +427,15 @@ function Map3() {
         viewBox={`${viewBox.x} ${viewBox.y} ${viewBox.width} ${viewBox.height}`}
         onMouseMove={handleMouseMove}
             >
-        {renderSvgMap()}
+        {renderSvgMap(regions)}
+
         {hoveredRegion && (
           <>
-            {createMapRegion(hoveredRegion, true)}
-            {hoveredRegion.pointer && (
-              createMapPointer(hoveredRegion, true)
-            )}
-          </>
+          {createMapRegion(hoveredRegion)}
+          {hoveredRegion.pointer && createMapPointer(hoveredRegion)}
+        </>
         )}
+
       </svg>
       <div style={{position: 'fixed',zIndex: 999999,
    top: '50px', left: '50px'}}>
