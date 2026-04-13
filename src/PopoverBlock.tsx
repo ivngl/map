@@ -1,11 +1,10 @@
 import { Group, HoverCard, Text } from '@mantine/core';
+import type { ReactNode } from 'react';
 
-
-//@ts-ignore
 type PopoverBlockType = {
-  text: string
-  children: any
-}
+  text: string;
+  children: ReactNode;
+};
 
 export function PopoverBlock({text, children}: PopoverBlockType) {
   return (

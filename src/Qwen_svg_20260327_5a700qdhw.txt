@@ -1,1 +1,0 @@
-<path id="RU-CR" title="Крым" class="land" d="M[x,y]L[x,y]...Z" />

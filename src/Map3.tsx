@@ -1,469 +1,302 @@
-import React, { useEffect, useMemo, useRef, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import './Map.css';
 
-import { SocialIcon } from 'react-social-icons';
-import { getPathLookup } from 'svg-getpointatlength';
-import { MOCK_REGIONS } from './ttt';
-import { TiSortAlphabetically } from 'react-icons/ti';
+import { MOCK_REGIONS, type RegionData } from './ttt';
+import { getTextWidth } from './utils/textMeasure';
+import { ZoomControls } from './components/ZoomControls';
 
-// --- Styles ---
-const styles = {
-  container: {
-    position: 'relative' as const,
-    width: '100%',
-    maxWidth: '1200px',
-    margin: '0 auto',
-    fontFamily: 'Arial, sans-serif',
-  },
-  svg: {
-    position: 'absolute',
-    width: '100%',
-    height: 'auto',
-    // ViewBox roughly covers the bounding box of Russia
-    viewBox: "0 0 1000 600",
-    backgroundColor: '#f0f4f8',
-    borderRadius: '8px',
-  },
-  regionPath: {
-    fill: '#e2e8f0',
-    stroke: '#ffffff',
-    strokeWidth: 1,
-    transition: 'fill 0.2s ease',
-    cursor: 'pointer',
-  },
-  regionPathHover: {
-    fill: '#3b82f6', // Blue highlight
-  },
-  tooltip: {
-    position: 'absolute' as const,
-    backgroundColor: 'rgba(0, 0, 0, 0.85)',
-    color: '#fff',
-    padding: '12px',
-    borderRadius: '6px',
-    fontSize: '14px',
-    pointerEvents: 'none' as const, // Crucial: lets mouse events pass through to the map
-    zIndex: 10,
-    boxShadow: '0 4px 6px rgba(0,0,0,0.1)',
-    minWidth: '200px',
-  },
-  tooltipTitle: {
-    fontWeight: 'bold' as const,
-    marginBottom: '4px',
-    fontSize: '16px',
-    borderBottom: '1px solid #555',
-    paddingBottom: '4px',
-  },
-  tooltipRow: {
-    display: 'flex',
-    justifyContent: 'space-between',
-    marginTop: '4px',
-    fontSize: '13px',
-    color: '#ccc',
-  }
-};
+// --- Constants ---
+const MAP_WIDTH = 1280;
+const MAP_HEIGHT = 720;
+const INITIAL_VIEW_BOX = { x: 0, y: 50, width: 1220, height: 750 };
+const SCALE_FACTOR = 0.2;
+const MIN_SCALE = 0.5;
+const MAX_SCALE = 3;
+const FONT_SIZE = 12;
+const HH_API_URL = 'https://api.hh.ru/vacancies';
 
-interface Vacancy {
-  name: string;
-  count: number;
+// --- Types ---
+interface PointerData {
+  width: number;
+  height: number;
+  pos: { x: number; y: number };
+  text: string;
+  textSize: number;
+  textLength: number;
+  radius: number;
+  offsetY: number;
 }
 
-interface RegionVacancies {
-  total: number;
-  vacancies: Vacancy[];
+interface RegionWithPointer extends RegionData {
+  pointer: PointerData | null;
 }
 
-interface HHResponse {
+interface TooltipPosition {
+  x: number;
+  y: number;
+}
+
+interface HhApiResponse {
   found: number;
-  items: any[];
+  items: unknown[];
 }
 
-interface SJResponse {
-  total: number;
-  objects: any[];
-}
+// --- Utility Functions ---
+function calculatePointerData(
+  region: RegionData,
+  scale: number,
+  fontSize: number = FONT_SIZE
+): PointerData | null {
+  if (!region.total) return null;
 
-  let scalf = .2
-  let pointS = 1
-function Map3() {
-  const [hoveredRegion, setHoveredRegion] = useState<RegionData | null>(null);
-  const [mousePos, setMousePos] = useState({ x: 0, y: 0 });
-  const [regionVacancies, setRegionVacancies] = useState(MOCK_REGIONS);
-  const containerRef = useRef<HTMLDivElement>(null);
-  const mapRef = useRef<SVGSVGElement | null>(null);
+  const text = String(region.total);
+  const textLength = getTextWidth(text, { size: fontSize });
+  const pointPadding = fontSize * 0.5;
+  const radius = textLength * 0.5 + pointPadding;
 
-  const initialViewBox = {x: 0, y: 50, width: 1220, height: 750}
-  const [viewBox, setViewBox] = useState(initialViewBox)
-  const [scale, setScale] = useState(1)
-   const [map, setMap] = useState({width: 1280, height: 720})
+  // Создаём временный path элемент для получения BBox
+  const tempSvg = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
+  const tempPath = document.createElementNS('http://www.w3.org/2000/svg', 'path');
+  tempPath.setAttribute('d', region.path);
+  tempSvg.appendChild(tempPath);
+  document.body.appendChild(tempSvg);
 
-  // Fetch vacancies from HH API for a specific region
-  const fetchVacancies = async (regionName: string): Promise<any> => {
-    // HH API endpoint for vacancies
-    const response = await fetch(`https://api.hh.ru/vacancies?text=${encodeURIComponent(regionName)}`);
+  const { x, y, width, height } = tempPath.getBBox();
+  document.body.removeChild(tempSvg);
 
+  const pointerInRegion = height > 20 && width > 20;
+  const offsetY = pointerInRegion ? 0 : height * 0.5 + radius * scale;
 
-    if (response.ok) {
-      return await response.json()
-    }
-    throw Error('jkl')
-
+  return {
+    width: radius * 2,
+    height: radius * 2,
+    pos: {
+      x: x + width / 2,
+      y: y + height * 0.5 - offsetY,
+    },
+    text,
+    textSize: fontSize,
+    textLength,
+    radius,
+    offsetY,
   };
+}
 
+async function fetchVacancies(regionName: string, signal: AbortSignal): Promise<number> {
+  const response = await fetch(
+    `${HH_API_URL}?text=${encodeURIComponent(regionName)}`,
+    { signal }
+  );
 
-  function drawPoints(vacanciesData) {
-    const points: { x: number; y: number }[] = []
-    const container = mapRef.current?.querySelectorAll(".region-container");
-    const icons = []
-
-    if (container) {
-      for (let i = 0; i < container.length; i++) {
-        const path = container[i].querySelector('.region') as SVGPathElement | null
-        //console.log(path)
-        if (path) {
-          const bbox = path.getBBox()
-          const pos = {
-            x: bbox.x + bbox.width / 2,
-            y: bbox.y + bbox.height / 2
-          }
-
-          const region = vacanciesData[i]
-          const pointer = container[i].querySelector(".pointer") as SVGForeignObjectElement | null
-
-          if (pointer) {
-            pointer.setAttribute('transform', `translate(${pos.x}, ${pos.y - region.pointer.offsetY})`)
-            //f.setAttribute('y', String(pos.y))
-            //container[i].setAttribute('x', String(pos.x))
-            // container[i].setAttribute('y', String(pos.y))
-          }
-
-
-        }
-      }
-
-    }
+  if (!response.ok) {
+    throw new Error(`HH API error: ${response.status}`);
   }
 
-  function getTextWidth(text: string, size: number = 10, family: string = 'arial') {
-    // if given, use cached canvas for better performance
-    // else, create new canvas
-    const font = `${size}px ${family}`
-    var canvas = getTextWidth.canvas || (getTextWidth.canvas = document.createElement("canvas"));
-    var context = canvas.getContext("2d");
-    context.font = font;
-    var metrics = context.measureText(text);
-    return metrics.width;
-};
-  // Fetch vacancies for all regions on mount
-  function getPointData(region, font = 12) {
-    const { path, total } = region
-    if(!total) return
-    const scaledFont = Math.floor(font * scale)
+  const data: HhApiResponse = await response.json();
+  return data.found;
+}
 
+// --- Sub-components ---
+interface MapRegionProps {
+  region: RegionWithPointer;
+  onMouseEnter: (region: RegionWithPointer) => void;
+  onMouseLeave: () => void;
+}
 
-    let lookup = getPathLookup(path)
-            const { x, y, width, height } = lookup.getBBox()
-      const scaledWidth  = width * scale
-      const scaledHeight  = height * scale
-      
+function createMapRegion({ region, onMouseEnter, onMouseLeave }: MapRegionProps) {
+  return (
+    <path
+      className='map-region'
+      d={region.path}
+      data-region={region.name}
+      onMouseEnter={() => onMouseEnter(region)}
+      onMouseLeave={onMouseLeave}
+    />
+  );
+}
 
+interface MapPointerProps {
+  pointer: PointerData;
+  onMouseEnter: () => void;
+  onMouseLeave: () => void;
+}
 
-            //const textLength = String(total).length ?? 0
+function createMapPointer({ pointer, onMouseEnter, onMouseLeave }: MapPointerProps) {
+  return (
+    <g
+      className="map-pointer"
+      transform={`translate(${pointer.pos.x}, ${pointer.pos.y - pointer.offsetY})`}
+      onMouseEnter={onMouseEnter}
+      onMouseLeave={onMouseLeave}
+    >
+      <line
+        className="pointer-line"
+        y2={pointer.offsetY}
+      />
+      <circle
+        className="pointer-circle"
+        r={pointer.radius}
+      />
+      <text
+        className="pointer-text"
+        textAnchor="middle"
+        dominantBaseline="central"
+      >
+        {pointer.text}
+      </text>
+    </g>
+  );
+}
 
-            const textLength = getTextWidth(total, font)
-            const pointPadding = font * .5
+// --- Main Component ---
+export default function Map3() {
+  const [hoveredRegion, setHoveredRegion] = useState<RegionWithPointer | null>(null);
+  const [mousePos, setMousePos] = useState<TooltipPosition>({ x: 0, y: 0 });
+  const [regions, setRegions] = useState<RegionData[]>(MOCK_REGIONS)
+  const [scale, setScale] = useState(1);
+  const [isLoading, setIsLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
 
-    const radius = textLength * .5 + pointPadding
-         const pointMarging = 0//radius * 2
-          const pointerInRegion = height > 20 && width  > 20
-            const offsetY = pointerInRegion ? 0 : height * .5 + radius * scale //radius * 2 > height ? pointMarging : 0
-            const pos = {
-              x: x + width / 2,
-              y: y + (height * .5 - offsetY)
-            }
+  const svgRef = useRef<SVGSVGElement | null>(null);
 
-            return {
-              width: radius * 2,
-              height: radius * 2,
-              pos,
-              text: total,
-              textSize: font,
-              textLength,
-              radius,
-              offsetY,
-            }
-
-    }
-
+  // Загрузка данных о вакансиях
   useEffect(() => {
-    const loadVacancies = async () => {
+    const controller = new AbortController();
 
-      const promises = regionVacancies.map(async (region) => {
-        if (region.name) {
-          let total = 0
+    async function loadVacancies() {
+      setIsLoading(true);
+      setError(null);
+
+      const results = await Promise.allSettled(
+        regions.map(async (region) => {
+          if (!region.name) return region;
+
           try {
-            const hh = await fetchVacancies(region.name);
-            total += hh.found
-          } catch (e) {
-            //  console.log(e)
-            return { ...region }
+            const total = await fetchVacancies(region.name, controller.signal);
+            return { ...region, total };
+          } catch (err) {
+            if (err instanceof DOMException && err.name === 'AbortError') return region;
+            console.error(`Failed to fetch vacancies for ${region.name}:`, err);
+            return region;
           }
+        })
+      );
 
-          if (total) {
-            region.total = total
-            //region.pointer = getPointData(region)
-            //region.pointer.text = total
-          }
-          return { ...region }
-        }
-      })
-      Promise.allSettled(promises).then(results => {
-        console.log('rrr', results)
+      const updatedRegions = results.map((result) =>
+        result.status === 'fulfilled' ? result.value : { ...MOCK_REGIONS[regions.indexOf(result.reason)] }
+      );
 
-        const vacanciesData = results.map((result, idx) => {
-          if (result.status === 'fulfilled') {
-            return result.value
-          } else {
-            console.log('TTTT', idx, result.reason)
-            return regionVacancies[idx]
-          }
-        }
-        )
-
-        //console.log(vacanciesData)
-        
-        setRegionVacancies(vacanciesData);
-      setScale(1.2)
-        // drawPoints(vacanciesData)
-
-      })
-
-    };
+      setRegions(updatedRegions);
+      setIsLoading(false);
+    }
 
     loadVacancies();
+
+    return () => controller.abort();
   }, []);
 
-
-  const handleMouseEnter = (region: RegionData) => {
+  // Обработчики мыши
+  const handleMouseEnter = useCallback((region: RegionWithPointer) => {
     setHoveredRegion(region);
-  };
+  }, []);
 
-  const handleMouseLeave = (region) => {
+  const handleMouseLeave = useCallback(() => {
     setHoveredRegion(null);
-  };
+  }, []);
 
-  const handleMouseMove = (e: React.MouseEvent) => {
-    if (mapRef.current) {
-      const rect = mapRef.current.getBoundingClientRect();
-      setMousePos({
-        x: e.clientX - rect.left,
-        y: e.clientY - rect.top,
-      });
-    }
-  };
+  const handleMouseMove = useCallback((e: React.MouseEvent<SVGSVGElement>) => {
+    if (!svgRef.current) return;
 
+    const rect = svgRef.current.getBoundingClientRect();
+    setMousePos({
+      x: e.clientX - rect.left,
+      y: e.clientY - rect.top,
+    });
+  }, []);
 
-  function drawPoints2() {
+  // Zoom контролы
+  const handleZoomIn = useCallback(() => {
+    setScale((prev) => Math.max(MIN_SCALE, prev - SCALE_FACTOR));
+  }, []);
 
-    //const containers = mapRef.current?.querySelectorAll(".region-container");
+  const handleZoomOut = useCallback(() => {
+    setScale((prev) => Math.min(MAX_SCALE, prev + SCALE_FACTOR));
+  }, []);
 
-
-    // if (container) {
-    return regionVacancies.map(region => {
-
-
-
-      if (region.pointer) {
-        return (
-          <svg onMouseEnter={() => handleMouseEnter(region)}
-            onMouseLeave={() => handleMouseLeave(region)} className='pointer' data-region={region.name} width={region.pointer.width} height={region.pointer.height + 20} transform={`translate(${region.pointer.pos.x}, ${region.pointer.pos.y - region.pointer.offsetY})`}>
-            <g
-              transform={`translate(${region.pointer.radius}, ${region.pointer.radius})`}>
-              <line
-                x1='0'
-                y1='0'
-                x2='0'
-                y2={region.pointer.offsetY}
-                stroke='#3b82f6'
-                strokeWidth='2'
-                className='pointer-line'
-              />
-              <circle
-
-                r={region.pointer.radius}
-                fill='#3b82f6'
-
-                className={region.name}
-              />
-              <text
-                textAnchor='middle'
-                dominantBaseline='central'
-                className='point-text'
-                style={{ fontSize: '14px', fontWeight: 'bold' }}
-              >
-                {region.pointer.text}
-              </text>
-            </g>
+  // Вычисляем pointer данные для каждого региона
+  const regionsWithPointers = useMemo(() => {
+    return regions.map((region) => ({
+      ...region,
+      pointer: calculatePointerData(region, scale),
+    }));
+  }, [regions, scale]);
 
 
-          </svg>
-        )
-      }
-    }
 
-    )
-
-
-    // return points
-  }
-  function createMapRegion(region, isActive: boolean = false) {
-
-    return ( <g className='region'>
-        <path
-          data-region={region.name}
-          className={`region ${region.name}`}
-          key={region.id}
-          d={region.path}
-          onMouseEnter={() => handleMouseEnter(region)}
-          onMouseLeave={() => handleMouseLeave(region)}
-        />
-      </g>
-    )
-  }
-  function createMapPointer(region, isActive: boolean = false) {
-
-    return (
-      <g
-      onMouseEnter={() => handleMouseEnter(region)}
-        onMouseLeave={() => handleMouseLeave(region)} className='pointer'
-        data-region={region.name}
-        width={region.pointer.width}
-        height={region.pointer.height + 20}
-        transform={`translate(${region.pointer.pos.x}, ${region.pointer.pos.y})`}>
-           <line
-
-                y2={region.pointer.offsetY}
-                stroke='#3b82f6'
-                strokeWidth='2'
-                className='pointer-line'
-              />
-        <circle
-          transform={`scale(${scale})`}
-            r={region.pointer.radius}
-            fill='#3b82f6'
-            className={region.name}
-          />
-        <text
-          transform={`scale(${scale})`}
-            textAnchor='middle'
-            dominantBaseline='central'
-            className='pointer-text'
-            style={{fontSize: region.pointer.textSize}}
-            >
-            {region.pointer.text}
-          </text>
-        </g>
-      )
-  }
-
-  function renderSvgMap(regions) {
-
+  function renderSvgMap() {
     const mapRegions = []
     const mapPointers = []
 
-    regions.map((region, idx) => {
+    regionsWithPointers.map((region) => {
       mapRegions.push(
         createMapRegion(region)
       )
       if (region.pointer) {
         mapPointers.push(
-          createMapPointer(region)
+          createMapPointer(region.pointer)
         )
       }
     })
     return [mapRegions, mapPointers]
   }
 
-
-
-  const scaleFactor = .2
-
-  const regions = useMemo(() => {
-    console.log("jjj", regionVacancies)
-   return regionVacancies.map(region => {
-      region.pointer = getPointData(region)
-      return region
-      
-    })
-    //setRegionVacancies(newRegions)
-  }, [scale])
-
-  function handleZoom() {
-    //mapRef.current.style.width = '150vw'
-    //mapRef.current.style.height = '150vh'
-
-    //setMap({ width: map.width + 100, height: map.height + 100 })
-    setScale(scale => scale - scaleFactor)
-    //mapRef.current.setAttribute('viewBox', `${newX} ${newY} ${width} ${height}`);
-
-}
-
-  function handleZoomOut() {
- // setMap({width: map.width + 100, height: map.height + 100})
-      setScale(scale => scale + scaleFactor)
-    //mapRef.current.setAttribute('viewBox', `${newX} ${newY} ${width} ${height}`);
-
-   //setFontSize(fontSize => fontSize * scale)
-
-  }
-
-
   return (
-    <div
+    <div className="map-container">
+      {isLoading && <div className="map-loading">Загрузка данных...</div>}
+      {error && <div className="map-error">{error}</div>}
 
-      className='wrap'
-
-    >
-      <svg ref={mapRef} width={map.width / scale} height={map.height / scale}
-        viewBox={`${viewBox.x} ${viewBox.y} ${viewBox.width} ${viewBox.height}`}
+      <svg
+        ref={svgRef}
+        className="map-svg"
+        width={MAP_WIDTH / scale}
+        height={MAP_HEIGHT / scale}
+        viewBox={`${INITIAL_VIEW_BOX.x} ${INITIAL_VIEW_BOX.y} ${INITIAL_VIEW_BOX.width} ${INITIAL_VIEW_BOX.height}`}
         onMouseMove={handleMouseMove}
-            >
-        {renderSvgMap(regions)}
+      >
+        {renderSvgMap()}
 
+        {/* Hovered регион поверх остальных */}
         {hoveredRegion && (
           <>
-          {createMapRegion(hoveredRegion)}
-          {hoveredRegion.pointer && createMapPointer(hoveredRegion)}
-        </>
+            {createMapRegion(hoveredRegion)}
+            {hoveredRegion.pointer && (
+              createMapPointer(hoveredRegion?.pointer)
+            )}
+          </>
         )}
-
       </svg>
-      <div style={{position: 'fixed',zIndex: 999999,
-   top: '50px', left: '50px'}}>
-<button  onClick={handleZoom}>
-+
- </button>
- <button  onClick={handleZoomOut}>
--
- </button>
-      </div>
 
+      <ZoomControls onZoomIn={handleZoomIn} onZoomOut={handleZoomOut} />
 
+      {/* Tooltip */}
       {hoveredRegion && (
         <div
+          className="map-tooltip"
           style={{
-            ...styles.tooltip,
-            left: mousePos.x + 50,
-            top: mousePos.y - 20,
+            left: mousePos.x + 15,
+            top: mousePos.y - 10,
           }}
         >
-          <div style={styles.tooltipTitle}>
+          <div className="tooltip-title">
             <h4>{hoveredRegion.name}</h4>
-            <span> {hoveredRegion?.pointer?.text} vacancies</span>
+            {hoveredRegion.total ? (
+              <span>{hoveredRegion.total.toLocaleString()} вакансий</span>
+            ) : (
+              <span>Нет данных</span>
+            )}
           </div>
         </div>
       )}
     </div>
   );
-};
-
-export default Map3
+}

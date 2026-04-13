@@ -1,177 +1,139 @@
-.pointer-text {
-    fill: rgb(255, 255, 255);
-    font-family: Arial, sans-serif;
-    font-weight: bold;
-    white-space: pre;
-}
-
-.ic {
-    background-color: grey;
-    height: 100%;
-}
-
-.svg-container {
-    width: 100vw;
-    height: auto;
-
-
-}
-
-
-
-svg {
-    position: absolute;
-    z-index: 1;
-    fill: aqua;
-
-}
-
-.wrap {
+/* === Контейнер карты === */
+.map-container {
     position: relative;
-    width: 1280px;
-    height: 720px;
-    overflow: auto;
+    width: 100%;
+    max-width: 1280px;
     margin: 0 auto;
+    overflow: auto;
 }
 
-.svg {
-    position: absolute;
-    z-index: 1;
-}
-
-.svg:hover {
-
-    z-index: 133;
-}
-
-.g {
-    display: flex;
-    justify-content: center;
+.map-svg {
     position: relative;
+    display: block;
+    background: #f0f4f8;
+    border-radius: 8px;
 }
 
-a:hover {
-    position: absolute;
-    z-index: 4343;
+/* === Zoom контролы === */
+.zoom-controls {
+    position: fixed;
+    z-index: 1000;
+    top: 50px;
+    left: 50px;
+    display: flex;
+    gap: 4px;
 }
 
-
-.region {
-    position: absolute;
-    fill: grey;
-    transition: all 1s;
-
+.zoom-controls button {
+    width: 36px;
+    height: 36px;
+    border: 1px solid #ccc;
+    border-radius: 4px;
+    background: white;
+    font-size: 18px;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: all 0.2s ease;
 }
 
-.pointer {
-    position: absolute;
+.zoom-controls button:hover {
+    background: #f0f0f0;
+    border-color: #999;
 }
 
-
-
-.hide {
-    visibility: hidden;
-    display: none;
-}
-
-.region:hover,
-.pointer:hover circle,
-.pointer:hover line,
-.region:hover + .pointer circle,
-.region:hover + .pointer line,
-.region:has(+ .pointer:hover) path  {
-    fill: green;
-    transition: all 1s;
-    stroke: white;
-}
-
-
-
-
-.point {
-    position: absolute;
+/* === Регионы карты === */
+.map-region {
+    fill: #e2e8f0;
+    stroke: #ffffff;
+    stroke-width: 1;
+    transition: fill 0.2s ease;
     cursor: pointer;
 }
 
-.country:hover {
-    fill: aqua;
+.map-region:hover,
+.map-region.hovered {
+    fill: #3b82f6;
+    stroke: #ffffff;
 }
 
-.container {
-    position: relative;
-}
-
-
-
-
-.land {
-    fill: #CCCCCC;
-    fill-opacity: 1;
-    stroke: white;
-    stroke-opacity: 1;
-    stroke-width: 0.5;
-}
-
-
-
-.icon {
-
-    position: absolute;
-    top: 0;
-    left: 0;
-    transform: translate(-50%, -50%);
-    opacity: 0;
-
-    &:hover {
-        opacity: 1;
-    }
-
-}
-
-.icon-container {
-    position: relative;
-
-    &:hover .popup {
-        visibility: visible;
-        width: 100px;
-        height: 100px;
-    }
-}
-
-.popup {
-
-    transition: .5s all ease;
-    visibility: hidden;
-    position: absolute;
-    background-color: aquamarine;
-    left: 30px;
-
-    & span {
-        container-name: pop;
-        font-size: 1em;
-        text-wrap: wrap;
-    }
-
-    width: 0px;
-    height: 0px;
-}
-
-@container pop (max-width: 50px) {
-    .popup span {
-        font-size: 2em;
-    }
+/* === Указатели === */
+.map-pointer {
+    cursor: pointer;
 }
 
 .pointer-line {
-
-    stroke:#3b82f6;
-    stroke-width:1;
+    stroke: #3b82f6;
+    stroke-width: 2;
 }
 
-
-
-line {
-  transform: scaleY(1);
-  transform-origin: top;
+.pointer-circle {
+    fill: #3b82f6;
+    transition: fill 0.2s ease;
 }
 
+.map-pointer:hover .pointer-circle {
+    fill: #2563eb;
+}
+
+.pointer-text {
+    fill: white;
+    font-family: Arial, sans-serif;
+    font-weight: bold;
+    font-size: 14px;
+    text-anchor: middle;
+    dominant-baseline: central;
+    user-select: none;
+}
+
+/* === Tooltip === */
+.map-tooltip {
+    position: absolute;
+    z-index: 100;
+    background: rgba(0, 0, 0, 0.85);
+    color: white;
+    padding: 12px;
+    border-radius: 6px;
+    font-size: 14px;
+    pointer-events: none;
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+    min-width: 200px;
+}
+
+.tooltip-title h4 {
+    font-weight: bold;
+    margin: 0 0 4px 0;
+    font-size: 16px;
+    border-bottom: 1px solid #555;
+    padding-bottom: 4px;
+}
+
+.tooltip-title span {
+    font-size: 13px;
+    color: #ccc;
+}
+
+/* === Состояния загрузки и ошибок === */
+.map-loading {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    font-size: 18px;
+    color: #666;
+    z-index: 10;
+}
+
+.map-error {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    font-size: 16px;
+    color: #e53e3e;
+    background: #fff5f5;
+    padding: 12px 20px;
+    border-radius: 6px;
+    z-index: 10;
+}

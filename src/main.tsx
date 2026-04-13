@@ -1,9 +1,8 @@
-import { StrictMode } from 'react'
-import { createRoot } from 'react-dom/client'
+import { StrictMode } from 'react';
+import { createRoot } from 'react-dom/client';
 
-import App from './App.tsx'
-import MapPage from './MapPage.tsx'
 import '@mantine/core/styles.css';
+import MapPage from './MapPage';
 
 import { MantineProvider } from '@mantine/core';
 
