@@ -44,7 +44,7 @@
 }
 
 /* === Регионы карты === */
-.map-region {
+.region {
     fill: #e2e8f0;
     stroke: #ffffff;
     stroke-width: 1;
@@ -56,6 +56,18 @@
 .map-region.hovered {
     fill: #3b82f6;
     stroke: #ffffff;
+}
+
+.region:hover,
+.pointer:hover circle,
+.pointer:hover line,
+.region:hover + .pointer circle,
+.region:hover + .pointer line,
+.region:has(+ .pointer:hover) path  {
+    fill: green;
+    transition: all 1s;
+    stroke: white;
+    stroke-width: 2px;
 }
 
 /* === Указатели === */

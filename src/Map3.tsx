@@ -4,15 +4,16 @@ import './Map.css';
 import { MOCK_REGIONS, type RegionData } from './ttt';
 import { getTextWidth } from './utils/textMeasure';
 import { ZoomControls } from './components/ZoomControls';
+import { getPathLookup } from 'svg-getpointatlength';
 
 // --- Constants ---
 const MAP_WIDTH = 1280;
 const MAP_HEIGHT = 720;
 const INITIAL_VIEW_BOX = { x: 0, y: 50, width: 1220, height: 750 };
-const SCALE_FACTOR = 0.2;
-const MIN_SCALE = 0.5;
-const MAX_SCALE = 3;
-const FONT_SIZE = 12;
+const SCALE_FACTOR = 0.1;
+const MIN_SCALE = 0.2;
+const MAX_SCALE = 1;
+const FONT_SIZE = 20;
 const HH_API_URL = 'https://api.hh.ru/vacancies';
 
 // --- Types ---
@@ -41,6 +42,7 @@ interface HhApiResponse {
   items: unknown[];
 }
 
+
 // --- Utility Functions ---
 function calculatePointerData(
   region: RegionData,
@@ -48,34 +50,39 @@ function calculatePointerData(
   fontSize: number = FONT_SIZE
 ): PointerData | null {
   if (!region.total) return null;
+  const { path, total } = region
 
-  const text = String(region.total);
-  const textLength = getTextWidth(text, { size: fontSize });
-  const pointPadding = fontSize * 0.5;
-  const radius = textLength * 0.5 + pointPadding;
 
   // Создаём временный path элемент для получения BBox
-  const tempSvg = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
-  const tempPath = document.createElementNS('http://www.w3.org/2000/svg', 'path');
-  tempPath.setAttribute('d', region.path);
-  tempSvg.appendChild(tempPath);
-  document.body.appendChild(tempSvg);
+  const lookup = getPathLookup(path)
+  const { x, y, width, height } = lookup.getBBox()
 
-  const { x, y, width, height } = tempPath.getBBox();
-  document.body.removeChild(tempSvg);
 
-  const pointerInRegion = height > 20 && width > 20;
-  const offsetY = pointerInRegion ? 0 : height * 0.5 + radius * scale;
+  const scaledFont = Math.floor(fontSize * scale)
+  const text = String(total);
+  const textLength = getTextWidth(text, {size: scaledFont});
+
+  const pointPadding = scaledFont * 0.5;
+  const pointMargin = 5
+  const radius = textLength * 0.5 + pointPadding;
+  const diameter = radius * 2;
+
+  const halfHeight = height * .5
+  const halfWidth = width * .5
+
+  const pointerInRegion = height > diameter + pointMargin && width > diameter + pointMargin;
+  const offsetY = pointerInRegion ? 0 : halfHeight + radius
+  const pos = {
+      x: x + halfWidth,
+      y: y + halfHeight - offsetY,
+  }
 
   return {
-    width: radius * 2,
-    height: radius * 2,
-    pos: {
-      x: x + width / 2,
-      y: y + height * 0.5 - offsetY,
-    },
+    width: diameter,
+    height: diameter,
+    pos,
     text,
-    textSize: fontSize,
+    textSize: scaledFont,
     textLength,
     radius,
     offsetY,
@@ -83,17 +90,17 @@ function calculatePointerData(
 }
 
 async function fetchVacancies(regionName: string, signal: AbortSignal): Promise<number> {
-  const response = await fetch(
-    `${HH_API_URL}?text=${encodeURIComponent(regionName)}`,
-    { signal }
-  );
+  //  const response = await fetch(
+  // `${HH_API_URL}?text=${encodeURIComponent(regionName)}`,
+  //    { signal }
+  // );
 
   if (!response.ok) {
     throw new Error(`HH API error: ${response.status}`);
   }
 
-  const data: HhApiResponse = await response.json();
-  return data.found;
+  //const data: HhApiResponse = await response.json();
+  return 1000//data.found;
 }
 
 // --- Sub-components ---
@@ -103,50 +110,7 @@ interface MapRegionProps {
   onMouseLeave: () => void;
 }
 
-function createMapRegion({ region, onMouseEnter, onMouseLeave }: MapRegionProps) {
-  return (
-    <path
-      className='map-region'
-      d={region.path}
-      data-region={region.name}
-      onMouseEnter={() => onMouseEnter(region)}
-      onMouseLeave={onMouseLeave}
-    />
-  );
-}
 
-interface MapPointerProps {
-  pointer: PointerData;
-  onMouseEnter: () => void;
-  onMouseLeave: () => void;
-}
-
-function createMapPointer({ pointer, onMouseEnter, onMouseLeave }: MapPointerProps) {
-  return (
-    <g
-      className="map-pointer"
-      transform={`translate(${pointer.pos.x}, ${pointer.pos.y - pointer.offsetY})`}
-      onMouseEnter={onMouseEnter}
-      onMouseLeave={onMouseLeave}
-    >
-      <line
-        className="pointer-line"
-        y2={pointer.offsetY}
-      />
-      <circle
-        className="pointer-circle"
-        r={pointer.radius}
-      />
-      <text
-        className="pointer-text"
-        textAnchor="middle"
-        dominantBaseline="central"
-      >
-        {pointer.text}
-      </text>
-    </g>
-  );
-}
 
 // --- Main Component ---
 export default function Map3() {
@@ -173,7 +137,9 @@ export default function Map3() {
 
           try {
             const total = await fetchVacancies(region.name, controller.signal);
-            return { ...region, total };
+            region.total = total
+            const pointer = calculatePointerData(region, scale)
+            return { ...region, pointer };
           } catch (err) {
             if (err instanceof DOMException && err.name === 'AbortError') return region;
             console.error(`Failed to fetch vacancies for ${region.name}:`, err);
@@ -182,8 +148,12 @@ export default function Map3() {
         })
       );
 
-      const updatedRegions = results.map((result) =>
-        result.status === 'fulfilled' ? result.value : { ...MOCK_REGIONS[regions.indexOf(result.reason)] }
+      const updatedRegions = results.map((result) => {
+        if (result.status === 'fulfilled') {
+          return result.value
+        }
+      }
+
       );
 
       setRegions(updatedRegions);
@@ -223,32 +193,78 @@ export default function Map3() {
     setScale((prev) => Math.min(MAX_SCALE, prev + SCALE_FACTOR));
   }, []);
 
-  // Вычисляем pointer данные для каждого региона
+
+
+
+  function MapRegion(region) {
+    return (
+      <g
+        key={region.id}
+        className="region">
+        <path
+          d={region.path}
+          onMouseEnter={() => handleMouseEnter(region)}
+          onMouseLeave={handleMouseLeave}
+        />
+      </g>
+    );
+  }
+
+  interface MapPointerProps {
+    pointer: PointerData;
+    onMouseEnter: () => void;
+    onMouseLeave: () => void;
+  }
+
+  function MapPointer(region) {
+    if (!region.pointer) return
+    return (
+      <g
+        key={`${region.id}pointer`}
+        className="pointer"
+        transform={`translate(${region.pointer.pos.x}, ${region.pointer.pos.y})`}
+        onMouseEnter={() => handleMouseEnter(region)}
+        onMouseLeave={handleMouseLeave}
+      >
+        <circle
+          className="pointer-circle"
+          r={region.pointer.radius}
+        />
+        <text
+          className="pointer-text"
+          textAnchor="middle"
+          dominantBaseline="central"
+          style={{ fontSize: region.pointer.textSize }}
+        >
+          {region.pointer.text}
+        </text>
+      </g>
+    );
+  }
+
+
+
+
   const regionsWithPointers = useMemo(() => {
-    return regions.map((region) => ({
-      ...region,
-      pointer: calculatePointerData(region, scale),
-    }));
-  }, [regions, scale]);
-
-
-
-  function renderSvgMap() {
     const mapRegions = []
     const mapPointers = []
 
-    regionsWithPointers.map((region) => {
+    regions.map((region) => {
       mapRegions.push(
-        createMapRegion(region)
+        MapRegion(region)
       )
       if (region.pointer) {
+        region.pointer = calculatePointerData(region, scale)
         mapPointers.push(
-          createMapPointer(region.pointer)
+          MapPointer(region)
         )
       }
     })
     return [mapRegions, mapPointers]
-  }
+
+  }, [regions, scale])
+
+
 
   return (
     <div className="map-container">
@@ -263,17 +279,15 @@ export default function Map3() {
         viewBox={`${INITIAL_VIEW_BOX.x} ${INITIAL_VIEW_BOX.y} ${INITIAL_VIEW_BOX.width} ${INITIAL_VIEW_BOX.height}`}
         onMouseMove={handleMouseMove}
       >
-        {renderSvgMap()}
+        {regionsWithPointers}
 
-        {/* Hovered регион поверх остальных */}
-        {hoveredRegion && (
-          <>
-            {createMapRegion(hoveredRegion)}
-            {hoveredRegion.pointer && (
-              createMapPointer(hoveredRegion?.pointer)
-            )}
-          </>
-        )}
+        {hoveredRegion && MapRegion(hoveredRegion)}
+
+        {hoveredRegion && MapPointer(hoveredRegion)}
+
+
+
+
       </svg>
 
       <ZoomControls onZoomIn={handleZoomIn} onZoomOut={handleZoomOut} />
