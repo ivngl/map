@@ -1,11 +1,8 @@
 export interface Pointer {
 	text: string;
+	textSize: number;
 	radius: number;
-	textLength: number;
-	offsetY: number;
 	pos: { x: number; y: number };
-	width: number;
-	height: number;
 }
 
 export interface RegionData {
@@ -15,6 +12,7 @@ export interface RegionData {
 	path: string;
 	pointer?: Pointer | null;
 }
+
 
 export const MOCK_REGIONS: RegionData[] = [
 	{ id: "RU-AD", name: "Адыгея", path: "M151.54,759.04L151.82,759.98L151.17,760.23L150.25,757.69L149.06,757.3L148.53,758.84L149.56,761.13L148.96,762.84L149.43,764.68L148.05,766.79L145.53,765.24L144.05,765.34L143.45,764.82L144.49,763.73L143.91,762.72L144.33,762.44L145.59,763.82L146.66,763.23L146.62,761.98L144.97,761L144.83,758.88L146.32,756.98L145.65,756.5L146.02,756.11L145.24,755.34L145.47,754.77L143.61,754.12L142.97,756.11L141.81,756.48L138.81,756.21L135.72,754.36L136.16,753.79L138.48,754.72L140.13,754.62L143.23,752.85L146.18,754.06L148.13,753.73L149.57,754.93z" },
