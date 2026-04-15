@@ -9,7 +9,7 @@ export interface Pointer {
 }
 
 export interface RegionData {
-	total?: number;
+	totalVacancies?: number;
 	id: string;
 	name: string;
 	path: string;

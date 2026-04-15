@@ -1,10 +1,10 @@
-import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { useCallback, useEffect, useRef, useState, useMemo } from 'react';
 import './Map.css';
-
+//@ts-expect-error
+import { getPathLookup } from 'svg-getpointatlength';
+import { ZoomControls } from './components/ZoomControls';
 import { MOCK_REGIONS, type RegionData } from './ttt';
 import { getTextWidth } from './utils/textMeasure';
-import { ZoomControls } from './components/ZoomControls';
-import { getPathLookup } from 'svg-getpointatlength';
 
 // --- Constants ---
 const MAP_WIDTH = 1280;
@@ -14,7 +14,6 @@ const SCALE_FACTOR = 0.1;
 const MIN_SCALE = 0.2;
 const MAX_SCALE = 1;
 const FONT_SIZE = 20;
-const HH_API_URL = 'https://api.hh.ru/vacancies';
 
 // --- Types ---
 interface PointerData {
@@ -37,11 +36,6 @@ interface TooltipPosition {
   y: number;
 }
 
-interface HhApiResponse {
-  found: number;
-  items: unknown[];
-}
-
 
 // --- Utility Functions ---
 function calculatePointerData(
@@ -49,8 +43,8 @@ function calculatePointerData(
   scale: number,
   fontSize: number = FONT_SIZE
 ): PointerData | null {
-  if (!region.total) return null;
-  const { path, total } = region
+  if (!region.totalVacancies) return null;
+  const { path, totalVacancies } = region
 
 
   // Создаём временный path элемент для получения BBox
@@ -59,8 +53,8 @@ function calculatePointerData(
 
 
   const scaledFont = Math.floor(fontSize * scale)
-  const text = String(total);
-  const textLength = getTextWidth(text, {size: scaledFont});
+  const text = String(totalVacancies);
+  const textLength = getTextWidth(text, { size: scaledFont });
 
   const pointPadding = scaledFont * 0.5;
   const pointMargin = 5
@@ -73,8 +67,8 @@ function calculatePointerData(
   const pointerInRegion = height > diameter + pointMargin && width > diameter + pointMargin;
   const offsetY = pointerInRegion ? 0 : halfHeight + radius
   const pos = {
-      x: x + halfWidth,
-      y: y + halfHeight - offsetY,
+    x: x + halfWidth,
+    y: y + halfHeight - offsetY,
   }
 
   return {
@@ -88,19 +82,51 @@ function calculatePointerData(
     offsetY,
   };
 }
+const secret_key = "v3.r.138588701.23d91228908341d593346a84d10b5323830c89f2.9a823a6ac49332b17c851cf1f7dd4457366d5570"//import.meta.env.SUPERJOB_API_KEY
 
-async function fetchVacancies(regionName: string, signal: AbortSignal): Promise<number> {
-  //  const response = await fetch(
-  // `${HH_API_URL}?text=${encodeURIComponent(regionName)}`,
-  //    { signal }
-  // );
+const SUPERJOB_API_URL = "https://api.superjob.ru/2.0/vacancies"
 
-  if (!response.ok) {
-    throw new Error(`HH API error: ${response.status}`);
+
+const HH_API_URL = 'https://api.hh.ru/vacancies';
+
+type FetchParamsType = string | string[][] | Record<string, string> | URLSearchParams | undefined;
+
+
+async function fetchVacancies(baseUrl: string, params: FetchParamsType, signal: AbortSignal, headers: HeadersInit | undefined = undefined): Promise<number> {
+  let retryCount = 0;
+
+  const maxRetries = 3;
+
+  while (retryCount < maxRetries) {
+    try {
+      const paramsData = new URLSearchParams(params);
+      const url = `${baseUrl}?${paramsData.toString()}`
+
+      const response = await fetch(url, { headers, signal })
+      retryCount++;
+      if (response.status === 429) {
+        const retryAfter = Number(response.headers.get("Retry-After") || 1);
+        console.log(response.headers,
+          `Rate limited on ${url}. Retrying after ${retryAfter} seconds...`,
+        );
+
+        await new Promise((resolve) => setTimeout(resolve, retryAfter * 1000 * retryCount));
+        continue;
+      }
+
+      if (!response.ok) {
+        throw new Error(
+          `Failed to fetch ${url}: HTTP ${response.status}`,
+        );
+      }
+
+      return await response.json();
+
+    } catch (err) {
+      console.error(`Error fetching: ${err}`);
+      return 0
+    }
   }
-
-  //const data: HhApiResponse = await response.json();
-  return 1000//data.found;
 }
 
 // --- Sub-components ---
@@ -110,10 +136,61 @@ interface MapRegionProps {
   onMouseLeave: () => void;
 }
 
+function MapRegion({ region, onMouseEnter, onMouseLeave }: MapRegionProps) {
+  return (
+    <g
+      key={region.id}
+      className="region">
+      <path
+        d={region.path}
+        onMouseEnter={() => onMouseEnter(region)}
+        onMouseLeave={onMouseLeave}
+      />
+    </g>
+  );
+}
+
+interface MapPointerProps {
+  region: RegionWithPointer;
+  onMouseEnter: (region: RegionWithPointer) => void;
+  onMouseLeave: () => void;
+}
+
+function MapPointer({ region, onMouseEnter, onMouseLeave }: MapPointerProps) {
+  if (!region.pointer) return null;
+  return (
+    <g
+      key={`${region.id}pointer`}
+      className="pointer"
+      transform={`translate(${region.pointer.pos.x}, ${region.pointer.pos.y})`}
+      onMouseEnter={() => onMouseEnter(region)}
+      onMouseLeave={onMouseLeave}
+    >
+      <circle
+        className="pointer-circle"
+        r={region.pointer.radius}
+      />
+      <text
+        className="pointer-text"
+        textAnchor="middle"
+        dominantBaseline="central"
+        style={{ fontSize: region.pointer.textSize }}
+      >
+        {region.pointer.text}
+      </text>
+    </g>
+  );
+}
+
+const VACANCIES_PER_PAGE = 1
+const PLATFORM_VACANCIES_QTY = String(VACANCIES_PER_PAGE * 1)
+const HH_VACANCY_CATEGORIES = ['96', '165']
+const SUPERJOB_VACANCY_CATEGORY = '33'
+
 
 
 // --- Main Component ---
-export default function Map3() {
+export default function MapPage() {
   const [hoveredRegion, setHoveredRegion] = useState<RegionWithPointer | null>(null);
   const [mousePos, setMousePos] = useState<TooltipPosition>({ x: 0, y: 0 });
   const [regions, setRegions] = useState<RegionData[]>(MOCK_REGIONS)
@@ -125,36 +202,111 @@ export default function Map3() {
 
   // Загрузка данных о вакансиях
   useEffect(() => {
-    const controller = new AbortController();
+    const controller = new AbortController()
+    const signal = controller.signal
 
     async function loadVacancies() {
+      const chankSize = 10
+
+
       setIsLoading(true);
       setError(null);
 
+      for (let i = 0; i < regions.length; i += chankSize) {
+
+      const hhParams = {
+              "text": regions[i].name,
+              "per_page": PLATFORM_VACANCIES_QTY,
+              "page": "1",
+              "professional_role": "96",
+      }
+      const hhParamsData = new URLSearchParams(hhParams);
+        const hhUrl = `${HH_API_URL}?${hhParamsData.toString()}`
+
+         const sjParams = {
+              "keyword": regions[i].name,
+              "count": PLATFORM_VACANCIES_QTY,
+              "page": "1",
+              "catalogues": SUPERJOB_VACANCY_CATEGORY,
+            }
+        const headers = { "X-Api-App-Id": secret_key }
+        const sjParamsData = new URLSearchParams(sjParams);
+        const sjUrl = `${HH_API_URL}?${sjParamsData.toString()}`
+
+
+        try {
+
+          const responses = await Promise.allSettled(
+            [fetch(hhUrl, { signal }).then(result => {
+              if (result.ok) {
+               const data = result.json()
+              }
+            }).catch(console.log),
+            fetch(sjUrl, { headers, signal })]
+          )
+
+          const data = await Promise.allSettled(responses.map(response => {
+            let totalVacancies = 0
+            if (response.status === 'fulfilled') {
+              totalVacancies += response.value
+              const pointer = calculatePointerData({...regions[i], totalVacancies}, scale)
+              return { ...regions[i], pointer}
+            }
+          }))
+
+        } catch (err) {
+          console.log(err)
+        }
+      }
       const results = await Promise.allSettled(
         regions.map(async (region) => {
           if (!region.name) return region;
+          let totalVacancies = 0
 
           try {
-            const total = await fetchVacancies(region.name, controller.signal);
-            region.total = total
-            const pointer = calculatePointerData(region, scale)
-            return { ...region, pointer };
+            const hhParams = {
+              "text": region.name,
+              "per_page": PLATFORM_VACANCIES_QTY,
+              "page": 1,
+              "professional_role": "96",
+            }
+
+
+            const hhData = await fetchVacancies(HH_API_URL, hhParams, controller.signal);
+            totalVacancies += hhData.found
           } catch (err) {
-            if (err instanceof DOMException && err.name === 'AbortError') return region;
-            console.error(`Failed to fetch vacancies for ${region.name}:`, err);
-            return region;
+            if (err instanceof DOMException && err.name === 'AbortError') return
+            console.error(`Failed to fetch HH vacancies for ${region.name}:`, err);
           }
+
+          try {
+            const sjParams = {
+              "keyword": region.name,
+              "count": PLATFORM_VACANCIES_QTY,
+              "page": 1,
+              "catalogues": SUPERJOB_VACANCY_CATEGORY,
+            }
+            const headers = { "X-Api-App-Id": secret_key }
+            const sjData = await fetchVacancies(SUPERJOB_API_URL, sjParams, controller.signal, headers);
+            totalVacancies += sjData.total
+          } catch (err) {
+            if (err instanceof DOMException && err.name === 'AbortError') return
+            console.error(`Failed to fetch SuperJob vacancies for ${region.name}:`, err);
+          }
+
+          if (!totalVacancies) return region
+
+          const pointer = calculatePointerData({ ...region, totalVacancies }, scale);
+          return { ...region, totalVacancies, pointer };
         })
       );
 
-      const updatedRegions = results.map((result) => {
+      const updatedRegions = results.flatMap((result) => {
         if (result.status === 'fulfilled') {
-          return result.value
+          return result.value;
         }
-      }
-
-      );
+        return [];
+      })
 
       setRegions(updatedRegions);
       setIsLoading(false);
@@ -162,7 +314,7 @@ export default function Map3() {
 
     loadVacancies();
 
-    return () => controller.abort();
+    return () => controller.abort()
   }, []);
 
   // Обработчики мыши
@@ -186,83 +338,44 @@ export default function Map3() {
 
   // Zoom контролы
   const handleZoomIn = useCallback(() => {
-    setScale((prev) => Math.max(MIN_SCALE, prev - SCALE_FACTOR));
+    setScale((prev) => Math.min(MAX_SCALE, prev - SCALE_FACTOR));
   }, []);
 
   const handleZoomOut = useCallback(() => {
-    setScale((prev) => Math.min(MAX_SCALE, prev + SCALE_FACTOR));
+    setScale((prev) => Math.max(MIN_SCALE, prev + SCALE_FACTOR));
   }, []);
 
+  const regionsWithPointers = useMemo(() => {
+    const mapRegions = [];
+    const mapPointers = [];
 
+    for (const region of regions) {
+      const pointer = region.totalVacancies ? calculatePointerData(region, scale) : null;
+      const regionWithPointer: RegionWithPointer = { ...region, pointer };
 
-
-  function MapRegion(region) {
-    return (
-      <g
-        key={region.id}
-        className="region">
-        <path
-          d={region.path}
-          onMouseEnter={() => handleMouseEnter(region)}
+      mapRegions.push(
+        <MapRegion
+          key={region.id}
+          region={regionWithPointer}
+          onMouseEnter={handleMouseEnter}
           onMouseLeave={handleMouseLeave}
         />
-      </g>
-    );
-  }
+      );
 
-  interface MapPointerProps {
-    pointer: PointerData;
-    onMouseEnter: () => void;
-    onMouseLeave: () => void;
-  }
-
-  function MapPointer(region) {
-    if (!region.pointer) return
-    return (
-      <g
-        key={`${region.id}pointer`}
-        className="pointer"
-        transform={`translate(${region.pointer.pos.x}, ${region.pointer.pos.y})`}
-        onMouseEnter={() => handleMouseEnter(region)}
-        onMouseLeave={handleMouseLeave}
-      >
-        <circle
-          className="pointer-circle"
-          r={region.pointer.radius}
-        />
-        <text
-          className="pointer-text"
-          textAnchor="middle"
-          dominantBaseline="central"
-          style={{ fontSize: region.pointer.textSize }}
-        >
-          {region.pointer.text}
-        </text>
-      </g>
-    );
-  }
-
-
-
-
-  const regionsWithPointers = useMemo(() => {
-    const mapRegions = []
-    const mapPointers = []
-
-    regions.map((region) => {
-      mapRegions.push(
-        MapRegion(region)
-      )
-      if (region.pointer) {
-        region.pointer = calculatePointerData(region, scale)
+      if (pointer) {
         mapPointers.push(
-          MapPointer(region)
-        )
+          <MapPointer
+            key={`${region.id}-pointer`}
+            region={regionWithPointer}
+            onMouseEnter={handleMouseEnter}
+            onMouseLeave={handleMouseLeave}
+          />
+        );
       }
-    })
-    return [mapRegions, mapPointers]
+    }
 
-  }, [regions, scale])
+    return [mapRegions, mapPointers];
+  }, [regions, scale, handleMouseEnter, handleMouseLeave]);
 
 
 
@@ -281,13 +394,22 @@ export default function Map3() {
       >
         {regionsWithPointers}
 
-        {hoveredRegion && MapRegion(hoveredRegion)}
-
-        {hoveredRegion && MapPointer(hoveredRegion)}
-
-
-
-
+        {hoveredRegion && (
+          <>
+            <MapRegion
+              key={`${hoveredRegion.id}-hovered`}
+              region={hoveredRegion}
+              onMouseEnter={handleMouseEnter}
+              onMouseLeave={handleMouseLeave}
+            />
+            <MapPointer
+              key={`${hoveredRegion.id}-hovered-pointer`}
+              region={hoveredRegion}
+              onMouseEnter={handleMouseEnter}
+              onMouseLeave={handleMouseLeave}
+            />
+          </>
+        )}
       </svg>
 
       <ZoomControls onZoomIn={handleZoomIn} onZoomOut={handleZoomOut} />
@@ -303,8 +425,8 @@ export default function Map3() {
         >
           <div className="tooltip-title">
             <h4>{hoveredRegion.name}</h4>
-            {hoveredRegion.total ? (
-              <span>{hoveredRegion.total.toLocaleString()} вакансий</span>
+            {hoveredRegion.totalVacancies ? (
+              <span>{hoveredRegion.totalVacancies.toLocaleString()} вакансий</span>
             ) : (
               <span>Нет данных</span>
             )}
