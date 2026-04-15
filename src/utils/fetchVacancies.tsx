@@ -13,7 +13,7 @@ export default async function fetchVacancies(
 ): Promise<number> {
   const results = await Promise.allSettled(
     configs.map(async (cfg) => {
-      const params = new URLSearchParams({ ...cfg.params, keyword: regionName, text: regionName });
+      const params = new URLSearchParams({ ...cfg.params });
       const response = await fetch(`${cfg.baseUrl}?${params}`, {
         headers: cfg.headers,
         signal,

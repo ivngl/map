@@ -34,28 +34,7 @@ interface TooltipPosition {
 }
 
 
-const SUPERJOB_CONFIG: FetchVacancyConfig = {
-  baseUrl: SUPERJOB_API_URL,
-  params: {
-    keyword: '',
-    count: VACANCIES_PER_PAGE,
-    page: '1',
-    catalogues: SUPERJOB_VACANCY_CATEGORY,
-  },
-  headers: { 'X-Api-App-Id': import.meta.env.VITE_SUPERJOB_API_KEY },
-  parseResponse: (data: Record<string, number>) => data.total ?? 0,
-};
 
-const HH_CONFIG: FetchVacancyConfig = {
-  baseUrl: HH_API_URL,
-  params: {
-    text: '',
-    per_page: VACANCIES_PER_PAGE,
-    page: '1',
-    professional_role: HH_PROFESSIONAL_ROLE,
-  },
-  parseResponse: (data: Record<string, number>) => data.found ?? 0,
-};
 
 
 
@@ -88,8 +67,30 @@ export default function MapPage() {
         for (let i = 0; i < regions.length; i += CHUNK_SIZE) {
           const chunk = regions.slice(i, i + CHUNK_SIZE);
 
-          const chunkPromises = chunk.map((region) =>
-            fetchVacancies(region.name, [SUPERJOB_CONFIG, HH_CONFIG], signal).then((totalVacancies) => {
+          const chunkPromises = chunk.map((region) => {
+            const SUPERJOB_CONFIG: FetchVacancyConfig = {
+              baseUrl: SUPERJOB_API_URL,
+              params: {
+                town: region.name,
+                count: VACANCIES_PER_PAGE,
+                page: '1',
+                catalogues: SUPERJOB_VACANCY_CATEGORY,
+              },
+              headers: { 'X-Api-App-Id': import.meta.env.VITE_SUPERJOB_API_KEY },
+              parseResponse: (data: Record<string, number>) => data.total ?? 0,
+            };
+
+            const HH_CONFIG: FetchVacancyConfig = {
+              baseUrl: HH_API_URL,
+              params: {
+                area: String(region.area_id),
+                per_page: VACANCIES_PER_PAGE,
+                page: '1',
+                professional_role: HH_PROFESSIONAL_ROLE,
+              },
+              parseResponse: (data: Record<string, number>) => data.found ?? 0,
+            };
+            return fetchVacancies(region.name, [SUPERJOB_CONFIG, HH_CONFIG], signal).then((totalVacancies) => {
 
               const updated: RegionData = {
                 ...region,
@@ -97,7 +98,8 @@ export default function MapPage() {
                 pointer: totalVacancies ? calculatePointerData({ ...region, totalVacancies }, scale) : null,
               };
               return updated;
-            }),
+            })
+          }
           );
 
           const chunkResults = await Promise.all(chunkPromises);
