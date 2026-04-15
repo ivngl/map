@@ -5,8 +5,11 @@ import { Tooltip } from '@mantine/core';
 import MapPointer from './components/MapPointer';
 import MapRegion from './components/MapRegion';
 import { ZoomControls } from './components/ZoomControls';
-import { MOCK_REGIONS, type RegionData } from './ttt';
+import { MOCK_REGIONS, type RegionData } from './svgMapData';
 import calculatePointerData from './utils/calculatePointerData';
+import type { FetchVacancyConfig } from './utils/fetchVacancies';
+import fetchVacancies from './utils/fetchVacancies';
+
 
 
 const MAP_WIDTH = 1280;
@@ -31,58 +34,28 @@ interface TooltipPosition {
 }
 
 
-
-async function fetchSuperjobVacancies(
-  regionName: string,
-  signal: AbortSignal,
-): Promise<number> {
-  const params = new URLSearchParams({
-    keyword: regionName,
+const SUPERJOB_CONFIG: FetchVacancyConfig = {
+  baseUrl: SUPERJOB_API_URL,
+  params: {
+    keyword: '',
     count: VACANCIES_PER_PAGE,
     page: '1',
     catalogues: SUPERJOB_VACANCY_CATEGORY,
-  });
-  const headers = { 'X-Api-App-Id': import.meta.env.VITE_SUPERJOB_API_KEY };
+  },
+  headers: { 'X-Api-App-Id': import.meta.env.VITE_SUPERJOB_API_KEY },
+  parseResponse: (data: Record<string, unknown>) => data.total ?? 0,
+};
 
-  const response = await fetch(`${SUPERJOB_API_URL}?${params}`, {
-    headers,
-    signal,
-  });
-
-  if (response.status === 429) {
-    const retryAfter = Number(response.headers.get('Retry-After') || 1);
-    await new Promise((resolve) => setTimeout(resolve, retryAfter * 1000));
-    return fetchSuperjobVacancies(regionName, signal);
-  }
-
-  if (!response.ok) return 0;
-  const data = await response.json();
-  return data.total ?? 0;
-}
-
-async function fetchHhVacancies(
-  regionName: string,
-  signal: AbortSignal,
-): Promise<number> {
-  const params = new URLSearchParams({
-    text: regionName,
+const HH_CONFIG: FetchVacancyConfig = {
+  baseUrl: HH_API_URL,
+  params: {
+    text: '',
     per_page: VACANCIES_PER_PAGE,
     page: '1',
     professional_role: HH_PROFESSIONAL_ROLE,
-  });
-
-  const response = await fetch(`${HH_API_URL}?${params}`, { signal });
-
-  if (response.status === 429) {
-    const retryAfter = Number(response.headers.get('Retry-After') || 1);
-    await new Promise((resolve) => setTimeout(resolve, retryAfter * 1000));
-    return fetchHhVacancies(regionName, signal);
-  }
-
-  if (!response.ok) return 0;
-  const data = await response.json();
-  return data.found ?? 0;
-}
+  },
+  parseResponse: (data: Record<string, unknown>) => data.found ?? 0,
+};
 
 
 
@@ -90,7 +63,7 @@ async function fetchHhVacancies(
 // --- Main Component ---
 export default function MapPage() {
   const [regions, setRegions] = useState<RegionData[]>(() =>
-    MOCK_REGIONS.splice(0, 10).map((r) => ({ ...r, pointer: null })),
+    MOCK_REGIONS.map((r) => ({ ...r, pointer: null })),
   );
   const [hoveredRegion, setHoveredRegion] = useState<RegionData | null>(
     null,
@@ -118,13 +91,7 @@ export default function MapPage() {
           const chunk = regions.slice(i, i + CHUNK_SIZE);
 
           const chunkPromises = chunk.map((region) =>
-            Promise.allSettled([
-              fetchSuperjobVacancies(region.name, signal),
-              fetchHhVacancies(region.name, signal),
-            ]).then(([sjResult, hhResult]) => {
-              const sjTotal = sjResult.status === 'fulfilled' ? sjResult.value : 0;
-              const hhTotal = hhResult.status === 'fulfilled' ? hhResult.value : 0;
-              const totalVacancies = sjTotal + hhTotal;
+            fetchVacancies(region.name, [SUPERJOB_CONFIG, HH_CONFIG], signal).then((totalVacancies) => {
 
               const updated: RegionData = {
                 ...region,
@@ -262,13 +229,13 @@ export default function MapPage() {
           position="top"
           opened
           label={hoveredRegion.name}
-          offset={{ mainAxis: 6, crossAxis: 1 }}
+          offset={{ mainAxis: 20, crossAxis: 50 }}
         >
           <div
             className='map-tooltip'
             style={{
-              left: mousePos.x + 15,
-              top: mousePos.y - 10,
+              left: mousePos.x,
+              top: mousePos.y,
             }}
           >
           </div>
