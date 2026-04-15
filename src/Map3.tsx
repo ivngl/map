@@ -200,122 +200,135 @@ export default function MapPage() {
 
   const svgRef = useRef<SVGSVGElement | null>(null);
 
+
+  function updatePointer(region) {
+    setRegions(prevItems =>
+      prevItems.map(item =>
+        item.id === region.id
+          ? region
+          : item
+      )
+    );
+  };
+
+  function groupBy(array, key) {
+    return array.reduce((acc, obj) => {
+      const value = obj[key];
+      (acc[value] = acc[value] || []).push(obj);
+      return acc;
+    }, {});
+  };
+
   // Загрузка данных о вакансиях
   useEffect(() => {
     const controller = new AbortController()
     const signal = controller.signal
 
     async function loadVacancies() {
-      const chankSize = 10
+      const chankSize = 100
 
 
       setIsLoading(true);
       setError(null);
 
-      for (let i = 0; i < regions.length; i += chankSize) {
+      const promises = []
+      let result = []
 
-      const hhParams = {
-              "text": regions[i].name,
+      let urls = regions.map(region => {
+        const hhParams = {
+              "text": region.name,
               "per_page": PLATFORM_VACANCIES_QTY,
               "page": "1",
               "professional_role": "96",
-      }
-      const hhParamsData = new URLSearchParams(hhParams);
-        const hhUrl = `${HH_API_URL}?${hhParamsData.toString()}`
+            }
+            const hhParamsData = new URLSearchParams(hhParams);
+            const hhUrl = `${HH_API_URL}?${hhParamsData.toString()}`
 
-         const sjParams = {
-              "keyword": regions[i].name,
+            const sjParams = {
+              "keyword": region.name,
               "count": PLATFORM_VACANCIES_QTY,
               "page": "1",
               "catalogues": SUPERJOB_VACANCY_CATEGORY,
             }
-        const headers = { "X-Api-App-Id": secret_key }
-        const sjParamsData = new URLSearchParams(sjParams);
-        const sjUrl = `${HH_API_URL}?${sjParamsData.toString()}`
+            const headers = { "X-Api-App-Id": secret_key }
+            const sjParamsData = new URLSearchParams(sjParams);
+            const sjUrl = `${SUPERJOB_API_URL}?${sjParamsData.toString()}`
+      })
 
+      for (let i = 0; i < regions.length; i += chankSize) {
+        const chunk = regions.slice(i, i + chankSize)
 
         try {
+          chunk.forEach(region => {
+            const hhParams = {
+              "text": region.name,
+              "per_page": PLATFORM_VACANCIES_QTY,
+              "page": "1",
+              "professional_role": "96",
+            }
+            const hhParamsData = new URLSearchParams(hhParams);
+            const hhUrl = `${HH_API_URL}?${hhParamsData.toString()}`
 
-          const responses = await Promise.allSettled(
-            [fetch(hhUrl, { signal }).then(result => {
-              if (result.ok) {
-               const data = result.json()
-              }
-            }).catch(console.log),
-            fetch(sjUrl, { headers, signal })]
+            const sjParams = {
+              "keyword": region.name,
+              "count": PLATFORM_VACANCIES_QTY,
+              "page": "1",
+              "catalogues": SUPERJOB_VACANCY_CATEGORY,
+            }
+            const headers = { "X-Api-App-Id": secret_key }
+            const sjParamsData = new URLSearchParams(sjParams);
+            const sjUrl = `${SUPERJOB_API_URL}?${sjParamsData.toString()}`
+
+            promises.push(
+              fetch(sjUrl, { headers, signal }).then(result => result.json()).then(data => ({ ...region, totalVacancies: data.total || 0 })).catch((err) => {
+                if (err.name === 'AbortError') return
+              }),
+              fetch(hhUrl, { signal }).then(result => result.json()).then(data => ({ ...region, totalVacancies: data.found || 0 })).catch((err) => {
+                if (err.name === 'AbortError') return
+              })
+            )
+          }
           )
 
-          const data = await Promise.allSettled(responses.map(response => {
-            let totalVacancies = 0
-            if (response.status === 'fulfilled') {
-              totalVacancies += response.value
-              const pointer = calculatePointerData({...regions[i], totalVacancies}, scale)
-              return { ...regions[i], pointer}
-            }
-          }))
+          const responses = await Promise.allSettled(promises)
+          const groupedById = Object.groupBy(responses, ({ value }) => value.id);
+
+
+          result = Object.values(groupedById).map(items => {
+            return items.reduce((acc, val) => {
+              acc.value.totalVacancies += val.value.totalVacancies
+              return acc
+            })
+          })
 
         } catch (err) {
           console.log(err)
         }
       }
-      const results = await Promise.allSettled(
-        regions.map(async (region) => {
-          if (!region.name) return region;
-          let totalVacancies = 0
 
-          try {
-            const hhParams = {
-              "text": region.name,
-              "per_page": PLATFORM_VACANCIES_QTY,
-              "page": 1,
-              "professional_role": "96",
-            }
-
-
-            const hhData = await fetchVacancies(HH_API_URL, hhParams, controller.signal);
-            totalVacancies += hhData.found
-          } catch (err) {
-            if (err instanceof DOMException && err.name === 'AbortError') return
-            console.error(`Failed to fetch HH vacancies for ${region.name}:`, err);
+      const updatedRegions = result.flatMap(item => {
+        if (item.status === 'fulfilled') {
+          if (item.value.totalVacancies) {
+            const pointer = calculatePointerData(item.value, scale)
+            return { ...item.value, pointer }
           }
-
-          try {
-            const sjParams = {
-              "keyword": region.name,
-              "count": PLATFORM_VACANCIES_QTY,
-              "page": 1,
-              "catalogues": SUPERJOB_VACANCY_CATEGORY,
-            }
-            const headers = { "X-Api-App-Id": secret_key }
-            const sjData = await fetchVacancies(SUPERJOB_API_URL, sjParams, controller.signal, headers);
-            totalVacancies += sjData.total
-          } catch (err) {
-            if (err instanceof DOMException && err.name === 'AbortError') return
-            console.error(`Failed to fetch SuperJob vacancies for ${region.name}:`, err);
-          }
-
-          if (!totalVacancies) return region
-
-          const pointer = calculatePointerData({ ...region, totalVacancies }, scale);
-          return { ...region, totalVacancies, pointer };
-        })
-      );
-
-      const updatedRegions = results.flatMap((result) => {
-        if (result.status === 'fulfilled') {
-          return result.value;
+          return []
         }
-        return [];
       })
 
-      setRegions(updatedRegions);
+      setRegions(updatedRegions)
+
+
       setIsLoading(false);
+
     }
 
     loadVacancies();
 
     return () => controller.abort()
   }, []);
+
+
 
   // Обработчики мыши
   const handleMouseEnter = useCallback((region: RegionWithPointer) => {
