@@ -222,10 +222,10 @@ export default function MapPage() {
   // Загрузка данных о вакансиях
   useEffect(() => {
     const controller = new AbortController()
-    const signal = controller.signal
+    //const signal = controller.signal
 
     async function loadVacancies() {
-      const chankSize = 100
+      const chankSize = 50
 
 
       setIsLoading(true);
@@ -233,27 +233,6 @@ export default function MapPage() {
 
       const promises = []
       let result = []
-
-      let urls = regions.map(region => {
-        const hhParams = {
-              "text": region.name,
-              "per_page": PLATFORM_VACANCIES_QTY,
-              "page": "1",
-              "professional_role": "96",
-            }
-            const hhParamsData = new URLSearchParams(hhParams);
-            const hhUrl = `${HH_API_URL}?${hhParamsData.toString()}`
-
-            const sjParams = {
-              "keyword": region.name,
-              "count": PLATFORM_VACANCIES_QTY,
-              "page": "1",
-              "catalogues": SUPERJOB_VACANCY_CATEGORY,
-            }
-            const headers = { "X-Api-App-Id": secret_key }
-            const sjParamsData = new URLSearchParams(sjParams);
-            const sjUrl = `${SUPERJOB_API_URL}?${sjParamsData.toString()}`
-      })
 
       for (let i = 0; i < regions.length; i += chankSize) {
         const chunk = regions.slice(i, i + chankSize)
@@ -280,12 +259,8 @@ export default function MapPage() {
             const sjUrl = `${SUPERJOB_API_URL}?${sjParamsData.toString()}`
 
             promises.push(
-              fetch(sjUrl, { headers, signal }).then(result => result.json()).then(data => ({ ...region, totalVacancies: data.total || 0 })).catch((err) => {
-                if (err.name === 'AbortError') return
-              }),
-              fetch(hhUrl, { signal }).then(result => result.json()).then(data => ({ ...region, totalVacancies: data.found || 0 })).catch((err) => {
-                if (err.name === 'AbortError') return
-              })
+              fetch(sjUrl, { headers, signal: controller.signal }).then(result => result.json()).then(data => ({ ...region, totalVacancies: data.total || 0 })).catch(console.log),
+              fetch(hhUrl, { signal: controller.signal }).then(result => result.json()).then(data => ({ ...region, totalVacancies: data.found || 0 })).catch(console.log)
             )
           }
           )
