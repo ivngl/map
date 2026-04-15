@@ -3,9 +3,10 @@ import './Map.css';
 // @ts-expect-error getPathLookup returns a path helper with getBBox method
 import { getPathLookup } from 'svg-getpointatlength';
 import { ZoomControls } from './components/ZoomControls';
+import type { Pointer } from './ttt';
 import { MOCK_REGIONS, type RegionData } from './ttt';
 import { getTextWidth } from './utils/textMeasure';
-import type { Pointer } from './ttt';
+import { PopoverBlock } from './PopoverBlock';
 
 // --- Constants ---
 const MAP_WIDTH = 1280;
@@ -170,7 +171,7 @@ function MapPointer({ region, onMouseEnter, onMouseLeave }: MapPointerProps) {
 // --- Main Component ---
 export default function MapPage() {
   const [regions, setRegions] = useState<RegionData[]>(() =>
-    MOCK_REGIONS.map((r) => ({ ...r, pointer: null })),
+    MOCK_REGIONS.splice(0, 10).map((r) => ({ ...r, pointer: null })),
   );
   const [hoveredRegion, setHoveredRegion] = useState<RegionData | null>(
     null,
@@ -330,7 +331,12 @@ export default function MapPage() {
         )}
       </svg>
 
-      <ZoomControls onZoomIn={handleZoomIn} onZoomOut={handleZoomOut} />
+      <ZoomControls
+        onZoomIn={handleZoomIn}
+        onZoomOut={handleZoomOut}
+        canZoomOut={scale < MAX_SCALE}
+        canZoomIn={scale > MIN_SCALE}
+      />
 
       {hoveredRegion && (
         <div
@@ -342,11 +348,6 @@ export default function MapPage() {
         >
           <div className="tooltip-title">
             <h4>{hoveredRegion.name}</h4>
-            {hoveredRegion.totalVacancies ? (
-              <span>{hoveredRegion.totalVacancies.toLocaleString()} вакансий</span>
-            ) : (
-              <span>Нет данных</span>
-            )}
           </div>
         </div>
       )}
