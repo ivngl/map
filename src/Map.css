@@ -28,7 +28,7 @@
 
 /* === Регионы карты === */
 .region {
-    fill: #e2e8f0;
+    fill: #050b1436;
     stroke: #ffffff;
     stroke-width: 1;
     transition: fill 0.2s ease;

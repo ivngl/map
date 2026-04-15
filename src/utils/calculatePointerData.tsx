@@ -5,6 +5,7 @@ import { getPathLookup } from 'svg-getpointatlength';
 
 const FONT_SIZE = 20;
 
+// Получаем параметры указателя карты
 export default function calculatePointerData(
     region: RegionData,
     scale: number,
@@ -14,7 +15,7 @@ export default function calculatePointerData(
 
     const lookup = getPathLookup(region.path);
     const { x, y, width, height } = lookup.getBBox();
-
+// Уменьшаем указатель при приближении карты в зависимости от размера шрифта
     const scaledFont = Math.floor(fontSize * scale);
     const text = String(region.totalVacancies);
     const textLength = getTextWidth(text, { size: scaledFont });

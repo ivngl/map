@@ -2,7 +2,7 @@ export interface FetchVacancyConfig {
   baseUrl: string;
   params: Record<string, string>;
   headers?: HeadersInit;
-  parseResponse: (data: unknown) => number;
+  parseResponse: (data: Record<string, number>) => number;
 }
 
 
@@ -31,7 +31,7 @@ export default async function fetchVacancies(
   );
 
   return results.reduce(
-    (sum, r) => sum + (r.status === 'fulfilled' ? r.value : 0),
+    (sum, result) => sum + (result.status === 'fulfilled' ? result.value : 0),
     0,
   );
 }

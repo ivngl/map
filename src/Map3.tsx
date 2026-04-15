@@ -13,8 +13,8 @@ import fetchVacancies from './utils/fetchVacancies';
 
 
 const MAP_WIDTH = 1280;
-const MAP_HEIGHT = 720;
-const INITIAL_VIEW_BOX = { x: 0, y: 50, width: 1220, height: 750 };
+const MAP_HEIGHT = 760;
+const INITIAL_VIEW_BOX = { x: 0, y: 0, width: 1220, height: 860 };
 const SCALE_FACTOR = 0.1;
 const MIN_SCALE = 0.2;
 const MAX_SCALE = 1;
@@ -43,7 +43,7 @@ const SUPERJOB_CONFIG: FetchVacancyConfig = {
     catalogues: SUPERJOB_VACANCY_CATEGORY,
   },
   headers: { 'X-Api-App-Id': import.meta.env.VITE_SUPERJOB_API_KEY },
-  parseResponse: (data: Record<string, unknown>) => data.total ?? 0,
+  parseResponse: (data: Record<string, number>) => data.total ?? 0,
 };
 
 const HH_CONFIG: FetchVacancyConfig = {
@@ -54,13 +54,11 @@ const HH_CONFIG: FetchVacancyConfig = {
     page: '1',
     professional_role: HH_PROFESSIONAL_ROLE,
   },
-  parseResponse: (data: Record<string, unknown>) => data.found ?? 0,
+  parseResponse: (data: Record<string, number>) => data.found ?? 0,
 };
 
 
 
-
-// --- Main Component ---
 export default function MapPage() {
   const [regions, setRegions] = useState<RegionData[]>(() =>
     MOCK_REGIONS.map((r) => ({ ...r, pointer: null })),
@@ -229,7 +227,7 @@ export default function MapPage() {
           position="top"
           opened
           label={hoveredRegion.name}
-          offset={{ mainAxis: 20, crossAxis: 50 }}
+          offset={{ mainAxis: 30, crossAxis: 50 }}
         >
           <div
             className='map-tooltip'
