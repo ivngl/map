@@ -7,6 +7,7 @@ import type { Pointer } from './ttt';
 import { MOCK_REGIONS, type RegionData } from './ttt';
 import { getTextWidth } from './utils/textMeasure';
 import { PopoverBlock } from './PopoverBlock';
+import { Tooltip } from '@mantine/core';
 
 // --- Constants ---
 const MAP_WIDTH = 1280;
@@ -339,17 +340,21 @@ export default function MapPage() {
       />
 
       {hoveredRegion && (
-        <div
-          className="map-tooltip"
-          style={{
-            left: mousePos.x + 15,
-            top: mousePos.y - 10,
-          }}
+        <Tooltip
+          position="top"
+          opened
+          label={hoveredRegion.name}
+          offset={{ mainAxis: 10, crossAxis: 70 }}
         >
-          <div className="tooltip-title">
-            <h4>{hoveredRegion.name}</h4>
+          <div
+            className='map-tooltip'
+            style={{
+              left: mousePos.x,
+              top: mousePos.y,
+            }}
+          >
           </div>
-        </div>
+        </Tooltip>
       )}
     </div>
   );

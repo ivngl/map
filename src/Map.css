@@ -86,14 +86,7 @@
 .map-tooltip {
     position: absolute;
     z-index: 100;
-    background: rgba(0, 0, 0, 0.85);
-    color: white;
-    padding: 12px;
-    border-radius: 6px;
-    font-size: 14px;
-    pointer-events: none;
-    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
-    min-width: 200px;
+   
 }
 
 .tooltip-title h4 {
