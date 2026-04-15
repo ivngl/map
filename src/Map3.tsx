@@ -344,13 +344,13 @@ export default function MapPage() {
           position="top"
           opened
           label={hoveredRegion.name}
-          offset={{ mainAxis: 10, crossAxis: 70 }}
+          offset={{ mainAxis: 6, crossAxis: 1 }}
         >
           <div
             className='map-tooltip'
             style={{
-              left: mousePos.x,
-              top: mousePos.y,
+              left: mousePos.x + 15,
+              top: mousePos.y - 10,
             }}
           >
           </div>
