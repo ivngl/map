@@ -1,22 +1,20 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import './Map.css';
-// @ts-expect-error getPathLookup returns a path helper with getBBox method
-import { getPathLookup } from 'svg-getpointatlength';
-import { ZoomControls } from './components/ZoomControls';
-import type { Pointer } from './ttt';
-import { MOCK_REGIONS, type RegionData } from './ttt';
-import { getTextWidth } from './utils/textMeasure';
-import { PopoverBlock } from './PopoverBlock';
-import { Tooltip } from '@mantine/core';
 
-// --- Constants ---
+import { Tooltip } from '@mantine/core';
+import MapPointer from './components/MapPointer';
+import MapRegion from './components/MapRegion';
+import { ZoomControls } from './components/ZoomControls';
+import { MOCK_REGIONS, type RegionData } from './ttt';
+import calculatePointerData from './utils/calculatePointerData';
+
+
 const MAP_WIDTH = 1280;
 const MAP_HEIGHT = 720;
 const INITIAL_VIEW_BOX = { x: 0, y: 50, width: 1220, height: 750 };
 const SCALE_FACTOR = 0.1;
 const MIN_SCALE = 0.2;
 const MAX_SCALE = 1;
-const FONT_SIZE = 20;
 const CHUNK_SIZE = 100;
 
 // API constants
@@ -26,48 +24,13 @@ const SUPERJOB_VACANCY_CATEGORY = '33';
 const HH_PROFESSIONAL_ROLE = '96';
 const VACANCIES_PER_PAGE = '1';
 
-// --- Types ---
-
 
 interface TooltipPosition {
   x: number;
   y: number;
 }
 
-// --- Utility Functions ---
-function calculatePointerData(
-  region: RegionData,
-  scale: number,
-  fontSize: number = FONT_SIZE,
-): Pointer | null {
-  if (!region.totalVacancies) return null;
 
-  const lookup = getPathLookup(region.path);
-  const { x, y, width, height } = lookup.getBBox();
-
-  const scaledFont = Math.floor(fontSize * scale);
-  const text = String(region.totalVacancies);
-  const textLength = getTextWidth(text, { size: scaledFont });
-
-  const pointPadding = scaledFont * 0.5;
-  const pointMargin = 5;
-  const radius = textLength * 0.5 + pointPadding;
-  const diameter = radius * 2;
-
-  const halfHeight = height * 0.5;
-  const halfWidth = width * 0.5;
-
-  const pointerInRegion =
-    height > diameter + pointMargin && width > diameter + pointMargin;
-  const offsetY = pointerInRegion ? 0 : halfHeight + radius;
-
-  return {
-    pos: { x: x + halfWidth, y: y + halfHeight - offsetY },
-    text,
-    textSize: scaledFont,
-    radius,
-  };
-}
 
 async function fetchSuperjobVacancies(
   regionName: string,
@@ -121,53 +84,8 @@ async function fetchHhVacancies(
   return data.found ?? 0;
 }
 
-// --- Sub-components ---
-interface MapRegionProps {
-  region: RegionData;
-  onMouseEnter: (region: RegionData) => void;
-  onMouseLeave: () => void;
-}
 
-function MapRegion({ region, onMouseEnter, onMouseLeave }: MapRegionProps) {
-  return (
-    <g key={region.id} className="region">
-      <path
-        d={region.path}
-        onMouseEnter={() => onMouseEnter(region)}
-        onMouseLeave={onMouseLeave}
-      />
-    </g>
-  );
-}
 
-interface MapPointerProps {
-  region: RegionData;
-  onMouseEnter: (region: RegionData) => void;
-  onMouseLeave: () => void;
-}
-
-function MapPointer({ region, onMouseEnter, onMouseLeave }: MapPointerProps) {
-  if (!region.pointer) return null;
-  return (
-    <g
-      key={`${region.id}-pointer`}
-      className="pointer"
-      transform={`translate(${region.pointer.pos.x}, ${region.pointer.pos.y})`}
-      onMouseEnter={() => onMouseEnter(region)}
-      onMouseLeave={onMouseLeave}
-    >
-      <circle className="pointer-circle" r={region.pointer.radius} />
-      <text
-        className="pointer-text"
-        textAnchor="middle"
-        dominantBaseline="central"
-        style={{ fontSize: region.pointer.textSize }}
-      >
-        {region.pointer.text}
-      </text>
-    </g>
-  );
-}
 
 // --- Main Component ---
 export default function MapPage() {
