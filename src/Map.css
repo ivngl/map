@@ -48,6 +48,17 @@
 }
 
 
+.region:focus,
+.pointer:focus circle,
+.pointer:focus line,
+.region:focus+.pointer circle,
+.region:focus+.pointer line,
+.region:has(+ .pointer:focus) path {
+    fill: green;
+    transition: all 1s;
+    stroke: white;
+}
+
 /* === Указатели === */
 .pointer {
     cursor: pointer;
