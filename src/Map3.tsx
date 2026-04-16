@@ -56,7 +56,7 @@ export default function MapPage() {
     const controller = new AbortController();
     const signal = controller.signal;
 
-    async function loadVacancies() {
+    //async function loadVacancies() {
       setIsLoading(true);
       setError(null);
 
@@ -118,7 +118,7 @@ export default function MapPage() {
           setIsLoading(false);
         }
       }
-    }
+    //}
 
     function fakeLoad() {
       setTimeout(() => {
