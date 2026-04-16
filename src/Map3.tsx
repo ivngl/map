@@ -5,11 +5,9 @@ import { Tooltip } from '@mantine/core';
 import MapPointer from './components/MapPointer';
 import MapRegion from './components/MapRegion';
 import { ZoomControls } from './components/ZoomControls';
+import data from './data/fakeData.json' with { type: 'json' };
 import { MOCK_REGIONS, type RegionData } from './svgMapData';
 import calculatePointerData from './utils/calculatePointerData';
-import type { FetchVacancyConfig } from './utils/fetchVacancies';
-import fetchVacancies from './utils/fetchVacancies';
-import data from './data/fakeData.json' with { type: 'json' };
 
 
 
@@ -19,14 +17,6 @@ const INITIAL_VIEW_BOX = { x: 0, y: 0, width: 1220, height: 860 };
 const SCALE_FACTOR = 0.1;
 const MIN_SCALE = 0.1;
 const MAX_SCALE = 1;
-const CHUNK_SIZE = 100;
-
-// API constants
-const SUPERJOB_API_URL = 'https://api.superjob.ru/2.0/vacancies';
-const HH_API_URL = 'https://api.hh.ru/vacancies';
-const SUPERJOB_VACANCY_CATEGORY = '33';
-const HH_PROFESSIONAL_ROLE = '96';
-const VACANCIES_PER_PAGE = '1';
 
 
 interface TooltipPosition {
@@ -53,85 +43,19 @@ export default function MapPage() {
 
   // Загрузка данных о вакансиях
   useEffect(() => {
-    const controller = new AbortController();
-    const signal = controller.signal;
-
-    //async function loadVacancies() {
-      setIsLoading(true);
-      setError(null);
-
-      try {
-        const updatedRegions: RegionData[] = [];
-
-        for (let i = 0; i < regions.length; i += CHUNK_SIZE) {
-          const chunk = regions.slice(i, i + CHUNK_SIZE);
-
-          const chunkPromises = chunk.map((region) => {
-            const SUPERJOB_CONFIG: FetchVacancyConfig = {
-              baseUrl: SUPERJOB_API_URL,
-              params: {
-                town: region.name,
-                count: VACANCIES_PER_PAGE,
-                page: '1',
-                catalogues: SUPERJOB_VACANCY_CATEGORY,
-              },
-              mode: "no-cors",
-              headers: { 'X-Api-App-Id': import.meta.env.VITE_SUPERJOB_API_KEY },
-              parseResponse: (data: Record<string, number>) => data.total ?? 0,
-            };
-
-            const HH_CONFIG: FetchVacancyConfig = {
-              baseUrl: HH_API_URL,
-              params: {
-                area: String(region.hh_area_id),
-                per_page: VACANCIES_PER_PAGE,
-                page: '1',
-                professional_role: HH_PROFESSIONAL_ROLE,
-              },
-              mode: "no-cors",
-              parseResponse: (data: Record<string, number>) => data.found ?? 0,
-            };
-            return fetchVacancies(region.name, [SUPERJOB_CONFIG, HH_CONFIG], signal).then((totalVacancies) => {
-
-              const updated: RegionData = {
-                ...region,
-                totalVacancies,
-                pointer: totalVacancies ? calculatePointerData({ ...region, totalVacancies }, scale) : null,
-              };
-              return updated;
-            })
-          }
-          );
-
-          const chunkResults = await Promise.all(chunkPromises);
-          updatedRegions.push(...chunkResults);
-        }
-        //console.log(updatedRegions)
-        setRegions(updatedRegions);
-      } catch (err) {
-        const message = err instanceof Error ? err.message : 'Unknown error';
-        if (signal.aborted) return;
-        setError(message);
-        console.error('Failed to load vacancies:', err);
-      } finally {
-        if (!signal.aborted) {
-          setIsLoading(false);
-        }
-      }
-    //}
 
     function fakeLoad() {
       setTimeout(() => {
         setRegions(data);
         setIsLoading(false);
+        setError(null)
       }, 5000)
     }
     //loadVacancies();
     fakeLoad()
 
 
-    return () => controller.abort();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
+
   }, []);
 
   // Обработчики мыши
