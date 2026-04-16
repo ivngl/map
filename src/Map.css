@@ -37,11 +37,15 @@
 
 
 .region:hover,
-.pointer:hover circle,
-.pointer:hover line,
+.region:active,
+.pointer:hover circle, .region:active circle,
+.pointer:hover line, .region:active line,
 .region:hover+.pointer circle,
+.region:active+.pointer circle,
 .region:hover+.pointer line,
-.region:has(+ .pointer:hover) path {
+.region:active+.pointer line,
+.region:has(+ .pointer:hover:hover) path,
+.region:has(+ .pointer:hover:active) path {
     fill: green;
     transition: all 1s;
     stroke: white;
@@ -62,9 +66,6 @@
     transition: fill 0.2s ease;
 }
 
-.map-pointer:hover .pointer-circle {
-    fill: #2563eb;
-}
 
 .pointer-text {
     fill: white;
