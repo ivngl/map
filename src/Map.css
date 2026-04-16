@@ -47,16 +47,6 @@
     stroke: white;
 }
 
-.region:active,
-.region:active circle,
-.region:active line,
-.region:active+.pointer circle,
-.region:active+.pointer line,
-.region:has(+ .pointer:active) path {
-    fill: green;
-    transition: all 1s;
-    stroke: white;
-}
 
 /* === Указатели === */
 .pointer {
