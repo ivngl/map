@@ -47,12 +47,12 @@
     stroke: white;
 }
 
-.region:link,
-.region:link circle,
-.region:link line,
-.region:link+.pointer circle,
-.region:link+.pointer line,
-.region:has(+ .pointer:link) path {
+.region:focus,
+.region:focus circle,
+.region:focus line,
+.region:focus+.pointer circle,
+.region:focus+.pointer line,
+.region:has(+ .pointer:focus) path {
     fill: green;
     transition: all 1s;
     stroke: white;
