@@ -37,16 +37,21 @@
 
 
 .region:hover,
-.region:link,
 .pointer:hover circle,
-.region:link circle,
 .pointer:hover line,
-.region:link line,
 .region:hover+.pointer circle,
-.region:link+.pointer circle,
 .region:hover+.pointer line,
+.region:has(+ .pointer:hover) path {
+    fill: green;
+    transition: all 1s;
+    stroke: white;
+}
+
+.region:link,
+.region:link circle,
+.region:link line,
+.region:link+.pointer circle,
 .region:link+.pointer line,
-.region:has(+ .pointer:hover) path,
 .region:has(+ .pointer:link) path {
     fill: green;
     transition: all 1s;
