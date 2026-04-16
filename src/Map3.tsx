@@ -9,6 +9,7 @@ import { MOCK_REGIONS, type RegionData } from './svgMapData';
 import calculatePointerData from './utils/calculatePointerData';
 import type { FetchVacancyConfig } from './utils/fetchVacancies';
 import fetchVacancies from './utils/fetchVacancies';
+import data from './data/fakeData.json' with { type: 'json' };
 
 
 
@@ -16,7 +17,7 @@ const MAP_WIDTH = 1280;
 const MAP_HEIGHT = 760;
 const INITIAL_VIEW_BOX = { x: 0, y: 0, width: 1220, height: 860 };
 const SCALE_FACTOR = 0.1;
-const MIN_SCALE = 0.2;
+const MIN_SCALE = 0.1;
 const MAX_SCALE = 1;
 const CHUNK_SIZE = 100;
 
@@ -32,8 +33,6 @@ interface TooltipPosition {
   x: number;
   y: number;
 }
-
-
 
 
 
@@ -76,6 +75,7 @@ export default function MapPage() {
                 page: '1',
                 catalogues: SUPERJOB_VACANCY_CATEGORY,
               },
+              mode: "no-cors",
               headers: { 'X-Api-App-Id': import.meta.env.VITE_SUPERJOB_API_KEY },
               parseResponse: (data: Record<string, number>) => data.total ?? 0,
             };
@@ -83,11 +83,12 @@ export default function MapPage() {
             const HH_CONFIG: FetchVacancyConfig = {
               baseUrl: HH_API_URL,
               params: {
-                area: String(region.area_id),
+                area: String(region.hh_area_id),
                 per_page: VACANCIES_PER_PAGE,
                 page: '1',
                 professional_role: HH_PROFESSIONAL_ROLE,
               },
+              mode: "no-cors",
               parseResponse: (data: Record<string, number>) => data.found ?? 0,
             };
             return fetchVacancies(region.name, [SUPERJOB_CONFIG, HH_CONFIG], signal).then((totalVacancies) => {
@@ -105,7 +106,7 @@ export default function MapPage() {
           const chunkResults = await Promise.all(chunkPromises);
           updatedRegions.push(...chunkResults);
         }
-
+        //console.log(updatedRegions)
         setRegions(updatedRegions);
       } catch (err) {
         const message = err instanceof Error ? err.message : 'Unknown error';
@@ -119,7 +120,15 @@ export default function MapPage() {
       }
     }
 
-    loadVacancies();
+    function fakeLoad() {
+      setTimeout(() => {
+        setRegions(data);
+        setIsLoading(false);
+      }, 5000)
+    }
+    //loadVacancies();
+    fakeLoad()
+
 
     return () => controller.abort();
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -229,7 +238,7 @@ export default function MapPage() {
           position="top"
           opened
           label={hoveredRegion.name}
-          offset={{ mainAxis: 30, crossAxis: 50 }}
+          offset={{ mainAxis: 40, crossAxis: 70 }}
         >
           <div
             className='map-tooltip'

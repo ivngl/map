@@ -2,6 +2,7 @@ export interface FetchVacancyConfig {
   baseUrl: string;
   params: Record<string, string>;
   headers?: HeadersInit;
+  mode?: string;
   parseResponse: (data: Record<string, number>) => number;
 }
 
