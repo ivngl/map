@@ -38,9 +38,7 @@
 
 .region:hover,
 .pointer:hover circle,
-.pointer:hover line,
 .region:hover+.pointer circle,
-.region:hover+.pointer line,
 .region:has(+ .pointer:hover) path {
     fill: green;
     transition: all 1s;
@@ -48,16 +46,20 @@
 }
 
 
-.region:focus,
-.pointer:focus circle,
-.pointer:focus line,
-.region:focus+.pointer circle,
-.region:focus+.pointer line,
-.region:has(+ .pointer:focus) path {
+.region:active,
+.pointer:active circle,
+.region:active+.pointer circle,
+.region:has(+ .pointer:active) path {
     fill: green;
     transition: all 1s;
     stroke: white;
 }
+
+circle, path {
+    transition: all 1s;
+}
+
+
 
 /* === Указатели === */
 .pointer {

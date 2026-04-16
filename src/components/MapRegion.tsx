@@ -5,11 +5,12 @@ interface MapRegionProps {
     onMouseEnter: (region: RegionData) => void;
     onClick: (region: RegionData) => void;
     onMouseLeave: () => void;
+    isActive?: boolean;
 }
 
-export default function MapRegion({ region, onMouseEnter, onMouseLeave, onClick }: MapRegionProps) {
+export default function MapRegion({ region, isActive, onMouseEnter, onMouseLeave, onClick }: MapRegionProps) {
     return (
-        <g key={region.id} className="region">
+        <g key={region.id} className={`region ${isActive && 'active'}`}>
             <path
                 d={region.path}
                 onMouseEnter={() => onMouseEnter(region)}

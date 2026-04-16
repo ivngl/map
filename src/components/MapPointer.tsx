@@ -5,14 +5,15 @@ interface MapPointerProps {
     onMouseEnter: (region: RegionData) => void;
     onClick: (region: RegionData) => void;
     onMouseLeave: () => void;
+    isActive?: boolean;
 }
 
-export default function MapPointer({ region, onMouseEnter, onMouseLeave, onClick }: MapPointerProps) {
+export default function MapPointer({ region, isActive, onMouseEnter, onMouseLeave, onClick }: MapPointerProps) {
     if (!region.pointer) return null;
     return (
         <g
             key={`${region.id}-pointer`}
-            className="pointer"
+            className={`pointer ${isActive && 'active'}`}
             transform={`translate(${region.pointer.pos.x}, ${region.pointer.pos.y})`}
             onMouseEnter={() => onMouseEnter(region)}
             onClick={() => onClick(region)}
