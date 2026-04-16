@@ -55,11 +55,16 @@
     stroke: white;
 }
 
-circle, path {
+.pointer circle, .region path {
     transition: all 1s;
 }
 
-
+.active circle,
+.active path {
+    fill: green;
+    transition: all 1s;
+    stroke: white;
+}
 
 /* === Указатели === */
 .pointer {
