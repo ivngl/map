@@ -12,6 +12,7 @@ export interface RegionData {
 	path: string;
 	pointer?: Pointer | null;
 	hh_area_id?: string;
+	isActive?: boolean;
 }
 
 

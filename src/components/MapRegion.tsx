@@ -9,7 +9,7 @@ interface MapRegionProps {
 
 export default function MapRegion({ region, onMouseEnter, onMouseLeave, onTouchStart }: MapRegionProps) {
     return (
-        <g key={region.id} className={`region ${region && 'hovered'}`}>
+        <g key={region.id} className={`region ${region.isActive ? 'active' : ''}`}>
             <path
                 d={region.path}
                 onMouseEnter={() => onMouseEnter(region)}

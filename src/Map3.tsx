@@ -60,7 +60,7 @@ export default function MapPage() {
 
   // Обработчики мыши
   const handleMouseEnter = useCallback((region: RegionData) => {
-    setHoveredRegion(region);
+    setHoveredRegion({...region, isActive: true});
   }, []);
 
   const handleMouseLeave = useCallback(() => {

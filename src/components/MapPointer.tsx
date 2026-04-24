@@ -12,7 +12,7 @@ export default function MapPointer({ region, onMouseEnter, onMouseLeave, onTouch
     return (
         <g
             key={`${region.id}-pointer`}
-            className={`pointer ${region.pointer && 'hovered'}`}
+            className={`pointer ${region.isActive ? 'active' : ''}`}
             transform={`translate(${region.pointer.pos.x}, ${region.pointer.pos.y})`}
             onMouseEnter={() => onMouseEnter(region)}
             onTouchStart={() => onTouchStart(region)}
