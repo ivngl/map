@@ -137,19 +137,15 @@ export default function MapPage() {
         {hoveredRegion && (
           <>
             <MapRegion
-              isActive={true}
               key={`${hoveredRegion.id}-hovered`}
               region={hoveredRegion}
               onMouseEnter={handleMouseEnter}
-              //onClick={handleMouseEnter}
               onMouseLeave={handleMouseLeave}
             />
             <MapPointer
-              isActive={true}
               key={`${hoveredRegion.id}-hovered-pointer`}
               region={hoveredRegion}
               onMouseEnter={handleMouseEnter}
-              //onClick={handleMouseEnter}
               onMouseLeave={handleMouseLeave}
             />
           </>
