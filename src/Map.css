@@ -30,7 +30,6 @@
 .region {
     fill: #050b1436;
     stroke: #ffffff6e;
-    stroke-width: 1px;
     cursor: pointer;
 }
 
@@ -38,13 +37,15 @@
     transition: all .5s;
 }
 
-.active, .active circle {
-    animation: show 1s forwards;
-    transition: all 1s;
+.active path, .active circle{
+    animation: show .5s forwards;
+    transition: all .5s;
     opacity: 0;
     fill: green;
     stroke: white;
+    stroke-width: 1px;
 }
+
 
 .region:hover,
 .pointer:hover circle,
