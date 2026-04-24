@@ -98,7 +98,7 @@ export default function MapPage() {
           key={region.id}
           region={regionWithPointer}
           onMouseEnter={handleMouseEnter}
-          onClick={handleMouseEnter}
+          onTouchStart={handleMouseEnter}
           onMouseLeave={handleMouseLeave}
         />,
       );
@@ -109,7 +109,7 @@ export default function MapPage() {
             key={`${region.id}-pointer`}
             region={regionWithPointer}
             onMouseEnter={handleMouseEnter}
-            onClick={handleMouseEnter}
+            onTouchStart={handleMouseEnter}
             onMouseLeave={handleMouseLeave}
           />,
         );
