@@ -43,7 +43,7 @@
 .pointer:hover circle,
 .region:hover+.pointer circle,
 .region:has(+ .pointer:hover) path,
-.active {
+.active, .active circle {
     fill: green;
     stroke: white;
 }
