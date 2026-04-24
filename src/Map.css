@@ -40,18 +40,16 @@
 
 
 .region:hover,
-.region:active,
+.region:focus-visible,
 .pointer:hover circle,
-.pointer:active circle,
+.pointer:focus-visible circle,
 .region:hover+.pointer circle,
-.region:active+.pointer circle,
+.region:focus-visible+.pointer circle,
 .region:has(+ .pointer:hover) path,
-.region:has(+ .pointer:active) path {
+.region:has(+ .pointer:focus-visible) path {
     fill: green;
     stroke: white;
 }
-
-
 
 
 
