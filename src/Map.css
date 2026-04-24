@@ -38,7 +38,7 @@
     transition: all .5s;
 }
 
-.active {
+.active, .active circle {
     animation: show 1s forwards;
     transition: all 1s;
     opacity: 0;
