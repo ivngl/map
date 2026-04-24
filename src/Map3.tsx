@@ -49,7 +49,7 @@ export default function MapPage() {
         setRegions(data);
         setIsLoading(false);
         setError(null)
-      }, 5000)
+      }, 1000)
     }
     //loadVacancies();
     fakeLoad()
@@ -141,7 +141,7 @@ export default function MapPage() {
               key={`${hoveredRegion.id}-hovered`}
               region={hoveredRegion}
               onMouseEnter={handleMouseEnter}
-              onClick={handleMouseEnter}
+              //onClick={handleMouseEnter}
               onMouseLeave={handleMouseLeave}
             />
             <MapPointer
@@ -149,7 +149,7 @@ export default function MapPage() {
               key={`${hoveredRegion.id}-hovered-pointer`}
               region={hoveredRegion}
               onMouseEnter={handleMouseEnter}
-              onClick={handleMouseEnter}
+              //onClick={handleMouseEnter}
               onMouseLeave={handleMouseLeave}
             />
           </>
