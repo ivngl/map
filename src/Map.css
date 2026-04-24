@@ -40,29 +40,20 @@
 
 
 .region:hover,
+.region:active,
 .pointer:hover circle,
+.pointer:active circle,
 .region:hover+.pointer circle,
-.region:has(+ .pointer:hover) path {
+.region:active+.pointer circle,
+.region:has(+ .pointer:hover) path,
+.region:has(+ .pointer:active) path {
     fill: green;
     stroke: white;
 }
 
 
-.region:active,
-.pointer:active circle,
-.region:active+.pointer circle,
-.region:has(+ .pointer:active) path {
-    fill: red;
-    stroke: white;
-}
 
-.region:focus,
-.pointer:focus circle,
-.region:focus+.pointer circle,
-.region:has(+ .pointer:focus) path {
-    fill: blue;
-    stroke: white;
-}
+
 
 /* === Указатели === */
 .pointer {
