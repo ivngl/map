@@ -8,7 +8,7 @@ const FONT_SIZE = 20;
 // Получаем параметры указателя карты
 export default function calculatePointerData(
     region: RegionData,
-    scale: number,
+    scale: number = 1,
     fontSize: number = FONT_SIZE,
 ): Pointer | null {
     if (!region.totalVacancies) return null;

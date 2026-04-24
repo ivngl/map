@@ -13,10 +13,10 @@ export function getTextWidth(
   text: string,
   { size = 10, family = 'arial' }: TextMeasureOptions = {}
 ): number {
-  if (!canvas) return text.length * size * 0.6;
+  if (!canvas) return text.length * size;
 
   const context = canvas.getContext('2d');
-  if (!context) return text.length * size * 0.6;
+  if (!context) return text.length * size;
 
   context.font = `${size}px ${family}`;
   return context.measureText(text).width;

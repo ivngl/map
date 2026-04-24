@@ -8,14 +8,15 @@ import { ZoomControls } from './components/ZoomControls';
 import data from './data/fakeData.json' with { type: 'json' };
 import { MOCK_REGIONS, type RegionData } from './svgMapData';
 import calculatePointerData from './utils/calculatePointerData';
+import mathRound10 from './utils/mathRandom10';
 
 
 
 const MAP_WIDTH = 1280;
 const MAP_HEIGHT = 760;
 const INITIAL_VIEW_BOX = { x: 0, y: 0, width: 1220, height: 860 };
-const SCALE_FACTOR = 0.1;
-const MIN_SCALE = 0.1;
+const SCALE_FACTOR = .1;
+const MIN_SCALE = .1;
 const MAX_SCALE = 1;
 
 
@@ -23,7 +24,6 @@ interface TooltipPosition {
   x: number;
   y: number;
 }
-
 
 
 
@@ -53,14 +53,12 @@ export default function MapPage() {
     }
     //loadVacancies();
     fakeLoad()
-
-
-
   }, []);
+
 
   // Обработчики мыши
   const handleMouseEnter = useCallback((region: RegionData) => {
-    setHoveredRegion({...region, isActive: true});
+    setHoveredRegion({ ...region, isActive: true });
   }, []);
 
   const handleMouseLeave = useCallback(() => {
@@ -78,11 +76,11 @@ export default function MapPage() {
 
   // Zoom контролы
   const handleZoomIn = useCallback(() => {
-    setScale((prev) => Math.max(MIN_SCALE, prev - SCALE_FACTOR));
+    setScale((prev) => mathRound10(prev - SCALE_FACTOR, -1));
   }, []);
 
   const handleZoomOut = useCallback(() => {
-    setScale((prev) => Math.min(MAX_SCALE, prev + SCALE_FACTOR));
+    setScale((prev) => mathRound10(prev + SCALE_FACTOR, -1));
   }, []);
 
   const regionsWithPointers = useMemo(() => {
@@ -155,8 +153,8 @@ export default function MapPage() {
       </svg>
 
       <ZoomControls
-        onZoomIn={handleZoomIn}
-        onZoomOut={handleZoomOut}
+        onZoomIn={() => handleZoomIn}
+        onZoomOut={() => handleZoomOut}
         canZoomOut={scale < MAX_SCALE}
         canZoomIn={scale > MIN_SCALE}
       />
