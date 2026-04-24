@@ -25,9 +25,28 @@ interface TooltipPosition {
   y: number;
 }
 
+type MapData = {
+  region_id: string,
+  totalVacancies: number
+}
+
+type MapProps = {
+  mapData: MapData[] | undefined
+}
 
 
-export default function MapPage() {
+const mockData = [
+    {
+        "region_id": 1,
+        "name": "Moscow",
+        "totalVacancies": 3654
+    }
+]
+
+
+export default function MapPage({ mapData }: MapProps) {
+
+
   const [regions, setRegions] = useState<RegionData[]>(() =>
     MOCK_REGIONS.map((r) => ({ ...r, pointer: null })),
   );
@@ -41,12 +60,28 @@ export default function MapPage() {
 
   const svgRef = useRef<SVGSVGElement | null>(null);
 
+  const pointers = mapData || mockData
+
+
+
   // Загрузка данных о вакансиях
   useEffect(() => {
 
     function fakeLoad() {
+      //const mapDataObj = JSON.parse(mapData)
+      const regionsMap = new Map(pointers.map(region => [String(region.region_id), region]))
       setTimeout(() => {
-        setRegions(data);
+
+        const updatedRegions = regions.map(item => {
+          const region = regionsMap.get(String(item.hh_area_id))
+          if (!region) return item
+          const totalVacancies = region.totalVacancies
+          const pointer = calculatePointerData({ ...item, totalVacancies })
+          return {...item, pointer, totalVacancies }
+        })
+
+        console.log(updatedRegions)
+        setRegions(updatedRegions);
         setIsLoading(false);
         setError(null)
       }, 1000)
