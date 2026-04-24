@@ -35,7 +35,7 @@
 }
 
 .pointer circle, .region path {
-    transition: all 1s;
+    transition: all .5s;
 }
 
 
@@ -55,7 +55,6 @@
     fill: green;
     stroke: white;
 }
-
 
 
 /* === Указатели === */
