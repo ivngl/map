@@ -188,8 +188,8 @@ export default function MapPage({ mapData }: MapProps) {
       </svg>
 
       <ZoomControls
-        onZoomIn={() => handleZoomIn}
-        onZoomOut={() => handleZoomOut}
+        onZoomIn={handleZoomIn}
+        onZoomOut={handleZoomOut}
         canZoomOut={scale < MAX_SCALE}
         canZoomIn={scale > MIN_SCALE}
       />
