@@ -15,7 +15,7 @@ export default function MapPointer({ region, onMouseEnter, onMouseLeave }: MapPo
             className={`pointer ${region.isActive ? 'active' : ''}`}
             transform={`translate(${region.pointer.pos.x}, ${region.pointer.pos.y})`}
             onMouseEnter={() => onMouseEnter(region)}
-            onClick={() => onMouseEnter(region)}
+            onTouchStart={() => onMouseEnter(region)}
             onMouseLeave={onMouseLeave}
         >
             <circle className="pointer-circle" r={region.pointer.radius} />
