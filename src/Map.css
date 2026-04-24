@@ -25,7 +25,6 @@
 }
 
 
-
 /* === Регионы карты === */
 .region {
     fill: #050b1436;
@@ -33,11 +32,13 @@
     cursor: pointer;
 }
 
-.pointer circle, .region path {
+.pointer circle,
+.region path {
     transition: all .5s;
 }
 
-.active path, .active circle{
+.active path,
+.active circle {
     animation: show .5s forwards;
     transition: all .5s;
     opacity: 0;
