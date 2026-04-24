@@ -98,7 +98,7 @@ export default function MapPage() {
           key={region.id}
           region={regionWithPointer}
           onMouseEnter={handleMouseEnter}
-          onTouchStart={handleMouseEnter}
+          onClick={handleMouseEnter}
           onMouseLeave={handleMouseLeave}
         />,
       );
@@ -109,7 +109,7 @@ export default function MapPage() {
             key={`${region.id}-pointer`}
             region={regionWithPointer}
             onMouseEnter={handleMouseEnter}
-            onTouchStart={handleMouseEnter}
+            onClick={handleMouseEnter}
             onMouseLeave={handleMouseLeave}
           />,
         );
@@ -140,14 +140,14 @@ export default function MapPage() {
               key={`${hoveredRegion.id}-hovered`}
               region={hoveredRegion}
               onMouseEnter={handleMouseEnter}
-              onTouchStart={handleMouseEnter}
+              onClick={handleMouseEnter}
               onMouseLeave={handleMouseLeave}
             />
             <MapPointer
               key={`${hoveredRegion.id}-hovered-pointer`}
               region={hoveredRegion}
               onMouseEnter={handleMouseEnter}
-              onTouchStart={handleMouseEnter}
+              onClick={handleMouseEnter}
               onMouseLeave={handleMouseLeave}
             />
           </>

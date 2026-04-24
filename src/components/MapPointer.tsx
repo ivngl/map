@@ -3,7 +3,7 @@ import type { RegionData } from '../svgMapData';
 interface MapPointerProps {
     region: RegionData;
     onMouseEnter: (region: RegionData) => void;
-    onTouchStart: (region: RegionData) => void;
+    onClick: (region: RegionData) => void;
     onMouseLeave: () => void;
 }
 
@@ -15,7 +15,7 @@ export default function MapPointer({ region, onMouseEnter, onMouseLeave }: MapPo
             className={`pointer ${region.isActive ? 'active' : ''}`}
             transform={`translate(${region.pointer.pos.x}, ${region.pointer.pos.y})`}
             onMouseEnter={() => onMouseEnter(region)}
-            onTouchStart={() => onMouseEnter(region)}
+            onClick={() => onMouseEnter(region)}
             onMouseLeave={onMouseLeave}
         >
             <circle className="pointer-circle" r={region.pointer.radius} />
