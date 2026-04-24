@@ -38,14 +38,27 @@
     transition: all .5s;
 }
 
+.active {
+    animation: show 1s forwards;
+    transition: all 1s;
+    opacity: 0;
+    fill: green;
+    stroke: white;
+}
 
 .region:hover,
 .pointer:hover circle,
 .region:hover+.pointer circle,
-.region:has(+ .pointer:hover) path,
-.active, .active circle {
+.region:has(+ .pointer:hover) path {
     fill: green;
     stroke: white;
+}
+
+
+@keyframes show {
+    100% {
+        opacity: 1;
+    }
 }
 
 
