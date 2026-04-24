@@ -140,14 +140,14 @@ export default function MapPage() {
               key={`${hoveredRegion.id}-hovered`}
               region={hoveredRegion}
               onMouseEnter={handleMouseEnter}
-              onClick={handleMouseEnter}
+              onTouchStart={handleMouseEnter}
               onMouseLeave={handleMouseLeave}
             />
             <MapPointer
               key={`${hoveredRegion.id}-hovered-pointer`}
               region={hoveredRegion}
               onMouseEnter={handleMouseEnter}
-              onClick={handleMouseEnter}
+              onTouchStart={handleMouseEnter}
               onMouseLeave={handleMouseLeave}
             />
           </>

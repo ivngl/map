@@ -3,17 +3,17 @@ import type { RegionData } from '../svgMapData';
 interface MapRegionProps {
     region: RegionData;
     onMouseEnter: (region: RegionData) => void;
-    onClick: (region: RegionData) => void;
+    onTouchStart: (region: RegionData) => void;
     onMouseLeave: () => void;
 }
 
-export default function MapRegion({ region, onMouseEnter, onMouseLeave, onClick }: MapRegionProps) {
+export default function MapRegion({ region, onMouseEnter, onMouseLeave, onTouchStart }: MapRegionProps) {
     return (
         <g key={region.id} className='region'>
             <path
                 d={region.path}
                 onMouseEnter={() => onMouseEnter(region)}
-                onClick={() => onClick(region)}
+                onTouchStart={() => onTouchStart(region)}
                 onMouseLeave={onMouseLeave}
             />
         </g>
