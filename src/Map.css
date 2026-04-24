@@ -40,13 +40,10 @@
 
 
 .region:hover,
-.region .active,
 .pointer:hover circle,
-.pointer .active circle,
 .region:hover+.pointer circle,
-.region .active+.pointer circle,
 .region:has(+ .pointer:hover) path,
-.region:has(+ .pointer .active) path {
+.active {
     fill: green;
     stroke: white;
 }
