@@ -27,6 +27,7 @@ interface TooltipPosition {
 
 type MapData = {
   region_id: string,
+  name: string,
   totalVacancies: number
 }
 
@@ -35,12 +36,12 @@ type MapProps = {
 }
 
 
-const mockData = [
-    {
-        "region_id": 1,
-        "name": "Moscow",
-        "totalVacancies": 3654
-    }
+const mockData: MapData[] = [
+  {
+    "region_id": 1,
+    "name": "Moscow",
+    "totalVacancies": 3654
+  }
 ]
 
 
@@ -60,34 +61,32 @@ export default function MapPage({ mapData }: MapProps) {
 
   const svgRef = useRef<SVGSVGElement | null>(null);
 
-  const pointers = mapData || mockData
-
-
+  mapData = mapData || mockData
 
   // Загрузка данных о вакансиях
   useEffect(() => {
 
-    function fakeLoad() {
-      //const mapDataObj = JSON.parse(mapData)
-      const regionsMap = new Map(pointers.map(region => [String(region.region_id), region]))
-      setTimeout(() => {
+    function loadVacancies() {
+      if (!mapData) {
+        setError('Data not loaded')
+        return
+      }
+      const regionsMap = new Map(mapData.map(region => [String(region.region_id), region]))
 
-        const updatedRegions = regions.map(item => {
-          const region = regionsMap.get(String(item.hh_area_id))
-          if (!region) return item
-          const totalVacancies = region.totalVacancies
-          const pointer = calculatePointerData({ ...item, totalVacancies })
-          return {...item, pointer, totalVacancies }
-        })
+      const updatedRegions = regions.map(item => {
+        const region = regionsMap.get(String(item.hh_area_id))
+        if (!region) return item
+        const totalVacancies = region.totalVacancies
+        const pointer = calculatePointerData({ ...item, totalVacancies })
+        return { ...item, pointer, totalVacancies }
+      })
+      setRegions(updatedRegions);
+      setIsLoading(false);
+      setError(null)
 
-        console.log(updatedRegions)
-        setRegions(updatedRegions);
-        setIsLoading(false);
-        setError(null)
-      }, 1000)
     }
-    //loadVacancies();
-    fakeLoad()
+
+    loadVacancies()
   }, []);
 
 
