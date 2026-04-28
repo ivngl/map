@@ -3,7 +3,7 @@ import fs from 'fs';
 const content = fs.readFileSync('src/svgMapData.tsx', 'utf8');
 
 // Structure:
-// Line ~1-103: interfaces + MOCK_REGIONS array ending with ]
+// Line ~1-103: interfaces + REGIONS_DATA array ending with ]
 // Line ~106+: export const AREAS = [...]
 
 // 1. Find AREAS start and its closing ]
@@ -36,11 +36,11 @@ function flatten(items) {
 flatten(areas);
 console.log('Total area entries:', areaMap.size);
 
-// 2. Parse MOCK_REGIONS - find the array bounds
-const mockDeclIdx = content.indexOf('export const MOCK_REGIONS');
+// 2. Parse REGIONS_DATA - find the array bounds
+const mockDeclIdx = content.indexOf('export const REGIONS_DATA');
 const mockArrStart = content.indexOf('[', mockDeclIdx);
 
-// Find closing ] for MOCK_REGIONS (before AREAS declaration)
+// Find closing ] for REGIONS_DATA (before AREAS declaration)
 depth = 0;
 let mockArrEnd = -1;
 for (let i = mockArrStart; i < areasDeclIdx; i++) {
@@ -50,7 +50,7 @@ for (let i = mockArrStart; i < areasDeclIdx; i++) {
 }
 
 const mockJsonStr = content.substring(mockArrStart, mockArrEnd + 1);
-console.log('MOCK_REGIONS JSON string length:', mockJsonStr.length);
+console.log('REGIONS_DATA JSON string length:', mockJsonStr.length);
 
 // Convert TS syntax to JSON for parsing
 const fixedJson = mockJsonStr
@@ -59,7 +59,7 @@ const fixedJson = mockJsonStr
   .replace(/,\s*\]/g, ']');
 
 const mockRegions = JSON.parse(fixedJson);
-console.log('MOCK_REGIONS parsed:', mockRegions.length);
+console.log('REGIONS_DATA parsed:', mockRegions.length);
 
 // 3. Match by name
 let matched = 0;
@@ -79,7 +79,7 @@ const newInterface = content.replace(
   'pointer?: Pointer | null;\n\tarea?: Record<string, unknown>;\n}'
 );
 
-// 5. Rebuild MOCK_REGIONS in TS format
+// 5. Rebuild REGIONS_DATA in TS format
 function toTS(obj) {
   let s = '\t{\n';
   s += `\t\tid: "${obj.id}",\n`;

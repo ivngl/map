@@ -5,11 +5,10 @@ import { Tooltip } from '@mantine/core';
 import MapPointer from './components/MapPointer';
 import MapRegion from './components/MapRegion';
 import { ZoomControls } from './components/ZoomControls';
-import data from './data/fakeData.json' with { type: 'json' };
-import { MOCK_REGIONS, type RegionData } from './svgMapData';
+import { REGIONS_DATA, type RegionData } from './svgMapData';
 import calculatePointerData from './utils/calculatePointerData';
 import mathRound10 from './utils/mathRandom10';
-
+import data from './data/fakeData.json' with { type: 'json' };
 
 
 const MAP_WIDTH = 1280;
@@ -36,20 +35,9 @@ type MapProps = {
 }
 
 
-const mockData: MapData[] = [
-  {
-    "region_id": 1,
-    "name": "Moscow",
-    "totalVacancies": 3654
-  }
-]
-
-
 export default function MapPage({ mapData }: MapProps) {
-
-
   const [regions, setRegions] = useState<RegionData[]>(() =>
-    MOCK_REGIONS.map((r) => ({ ...r, pointer: null })),
+    REGIONS_DATA.map((r) => ({ ...r, pointer: null })),
   );
   const [hoveredRegion, setHoveredRegion] = useState<RegionData | null>(
     null,
@@ -61,32 +49,19 @@ export default function MapPage({ mapData }: MapProps) {
 
   const svgRef = useRef<SVGSVGElement | null>(null);
 
-  mapData = mapData || mockData
 
   // Загрузка данных о вакансиях
   useEffect(() => {
 
-    function loadVacancies() {
-      if (!mapData) {
-        setError('Data not loaded')
-        return
-      }
-      const regionsMap = new Map(mapData.map(region => [String(region.region_id), region]))
-
-      const updatedRegions = regions.map(item => {
-        const region = regionsMap.get(String(item.hh_area_id))
-        if (!region) return item
-        const totalVacancies = region.totalVacancies
-        const pointer = calculatePointerData({ ...item, totalVacancies })
-        return { ...item, pointer, totalVacancies }
-      })
-      setRegions(updatedRegions);
-      setIsLoading(false);
-      setError(null)
-
+    function fakeLoad() {
+      setTimeout(() => {
+        setRegions(data);
+        setIsLoading(false);
+        setError(null)
+      }, 5000)
     }
 
-    loadVacancies()
+    fakeLoad()
   }, []);
 
 
