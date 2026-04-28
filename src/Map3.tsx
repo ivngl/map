@@ -24,18 +24,10 @@ interface TooltipPosition {
   y: number;
 }
 
-type MapData = {
-  region_id: string,
-  name: string,
-  totalVacancies: number
-}
-
-type MapProps = {
-  mapData: MapData[] | undefined
-}
 
 
-export default function MapPage({ mapData }: MapProps) {
+
+export default function MapPage() {
   const [regions, setRegions] = useState<RegionData[]>(() =>
     REGIONS_DATA.map((r) => ({ ...r, pointer: null })),
   );
@@ -48,7 +40,6 @@ export default function MapPage({ mapData }: MapProps) {
   const [error, setError] = useState<string | null>(null);
 
   const svgRef = useRef<SVGSVGElement | null>(null);
-
 
   // Загрузка данных о вакансиях
   useEffect(() => {
